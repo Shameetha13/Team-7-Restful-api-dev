@@ -109,3 +109,70 @@ Scenario: TC-057 - PATCH response time is within acceptable limit
     When I send a PATCH request to "/collections/products/objects/{objectId}" with partial data and measure response time
     Then the response status should be 200 OK
     And the response time should be within 2000 ms
+    
+    
+    #Author: Shameetha Ravikumar (TS-07/08/12)
+    
+  Scenario Outline: TC47 - POST /collections/{name}/objects with valid payload returns 200
+    When I add a collection item using Excel row <rowIndex>
+    Then the add-item response should be valid with all fields
+    And the response Content-Type should contain "application/json"
+
+    Examples:
+      | rowIndex |
+      | 0        |
+      | 1        |
+      | 2        |
+      | 3        |
+      | 4        |
+      | 5        |
+
+  
+  Scenario: TC48 - POST to another user's collection creates item in current user's collection
+    When I POST to another user's collection "other-user-collection"
+    Then the response should be 200 and item created in current user's collection
+    And the response Content-Type should contain "application/json"
+
+  
+  Scenario: TC49 - POST collection item with missing name field returns 200 (known defect)
+    When I add a collection item with missing name field in collection "products"
+    Then the response is 200 as a known defect for missing name
+    And the response Content-Type should contain "application/json"
+
+  
+  Scenario: TC50 - POST collection item with malformed payload returns 200
+    When I add a collection item with malformed payload in collection "products"
+    Then the malformed payload response should be 200 with id present
+    And the response Content-Type should contain "application/json"
+ 
+ 
+
+#Author Varshinee
+  Scenario: Get an existing object from a collection
+    Given The user is already registered and their API key is valid
+    And The collection item should exist in the collection
+    When GET request is sent for collection "product" and object ID "ff8081819d82fab6019d953b72a91709"
+    Then the response status code should be 200
+    And the value of "id" field in response should match with that in request
+    And the response should match the "ObjectResponse" schema
+
+  Scenario: Get an existing object from a collection with invalid API key
+    Given The API key is invalid
+    And The collection item should exist in the collection
+    When GET request is sent for collection "product" and object ID "ff8081819d82fab6019d953b72a91709"
+    Then the response status code should be 403
+    And the response body should contain appropriate error message
+
+  Scenario: Get an non existent object from a collection
+    Given The API key is valid
+    And The collection item should not exist in the collection
+    When GET request is sent for collection "product" and object ID "invalid-001"
+    Then the response status code should be 404
+    And the response body should contain appropriate error message
+
+  Scenario: Get an object from a non existing collection
+    Given The API key is valid
+    And The collection should not exist
+    When GET request is sent for collection "invalid-xyz" and object ID "ff8081819d82fab6019d953b72a91709"
+    Then the response status code should be 404
+    And the response body should contain appropriate error message
