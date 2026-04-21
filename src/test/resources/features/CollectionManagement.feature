@@ -19,8 +19,6 @@ Feature: TS15 - Authenticated Collections API
   Scenario: TC60 - DELETE from another user collection returns 404
     When user sends authenticated DELETE to "/collections/other-user-coll/objects/someId"
     Then the status code should be 404
-
- #kamal
  
  #Author: Kamala Kannan US09
 
@@ -43,3 +41,71 @@ Feature: TS15 - Authenticated Collections API
   Scenario: GET /collections with no API key returns 403
     When user sends unauthenticated GET to "/collections"
     Then the status code should be 403
+    
+#Author : Manish (TS-11/13/14)
+
+Scenario: TC-044 - GET objects for a valid collection returns 200 with list
+    When I send a GET request to "/collections/products/objects"
+    Then the response status should be 200 OK
+    And the response Content-Type should contain "application/json"
+    And the response body should contain a list of all objects in the collection
+    And the response time should be within 2000 ms
+
+Scenario: TC-045 - GET objects for a non-existing collection returns empty list
+    When I send a GET request to "/collections/randomCollectionXYZ123/objects"
+    Then the response status should be 200 OK
+    And the response Content-Type should contain "application/json"
+    And the response body should contain an empty list
+    And the response body should indicate no items found for the collection
+
+Scenario: TC-046 - GET objects response time is within acceptable limit
+    When I send a GET request to "/collections/products/objects" and measure response time
+    Then the response status should be 200 OK
+    And the response time should be within 2000 ms
+
+Scenario: TC-051 - PUT update object with valid data returns 200
+    When I send a PUT request to "/collections/products/objects/{objectId}" with a valid full payload
+    Then the response status should be 200 OK
+    And the response Content-Type should contain "application/json"
+    And the response body should contain the fully updated object
+    And the response body should reflect all updated values from the request
+    And the response time should be within 2000 ms
+
+Scenario: TC-052 - PUT update with missing mandatory fields returns 400 Bad Request
+    When I send a PUT request to "/collections/products/objects/{objectId}" with missing required fields
+    Then the response status should be 400 Bad Request
+    And the response Content-Type should contain "application/json"
+    And the response body should indicate missing or null required fields
+
+Scenario: TC-053 - PUT update on another user's collection should not allow access
+    Given another user also has a collection
+    When I send a PUT request to "/collections/products/objects/{objectId}" using another user's authorization
+    Then the response status should be 200 OK
+    And the response should not update the other user's collection
+    And a new record should be created in the current user's collection instead
+    And the response body should reflect the new record in current user's collection
+
+Scenario: TC-054 - PUT update response time is within acceptable limit
+    When I send a PUT request to "/collections/products/objects/{objectId}" with valid data and measure response time
+    Then the response status should be 200 OK
+    And the response time should be within 2000 ms
+
+Scenario: TC-055 - PATCH update single attribute returns 200
+    When I send a PATCH request to "/collections/products/objects/{objectId}" with a single attribute update
+    Then the response status should be 200 OK
+    And the response Content-Type should contain "application/json"
+    And the response body should show the updated attribute value
+    And other attributes should remain unchanged
+    And the response time should be within 2000 ms
+
+Scenario: TC-056 - PATCH update with invalid data type still returns 200 (as per current behavior)
+    When I send a PATCH request to "/collections/products/objects/{objectId}" with an invalid data type
+    Then the response status should be 200 OK
+    And the response Content-Type should contain "application/json"
+    And the response body should reflect the updated attribute even with incorrect data type
+    And other attributes should remain unchanged
+
+Scenario: TC-057 - PATCH response time is within acceptable limit
+    When I send a PATCH request to "/collections/products/objects/{objectId}" with partial data and measure response time
+    Then the response status should be 200 OK
+    And the response time should be within 2000 ms

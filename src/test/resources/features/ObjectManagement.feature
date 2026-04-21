@@ -41,8 +41,6 @@ Feature: TS0206 - Get Single Object by ID
    
   #Author: Kamala Kannan US01 && US05
 
-
-
   
    Given the base API is configured
 
@@ -75,7 +73,6 @@ Feature: TS0206 - Get Single Object by ID
     When user sends GET to "/objects"
     Then the status code should be 200
     And the response time should be below 2000 ms
-
 
   
   Scenario: PATCH single attribute returns 200
