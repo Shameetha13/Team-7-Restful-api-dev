@@ -1,9 +1,13 @@
 package stepdefinitions;
 
 import io.cucumber.java.en.*;
+import io.cucumber.datatable.DataTable;
+
 import io.restassured.RestAssured;
+import static io.restassured.RestAssured.given; 
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
+
 import org.testng.Assert;
 
 import java.util.*;
@@ -29,7 +33,7 @@ public class ObjectSteps {
     }
 
     // =========================
-    // API KEY (Scenario Outline + Excel DDT)
+    // API KEY
     // =========================
     @Given("the API key is {string}")
     public void setApiKey(String key) {
@@ -46,7 +50,6 @@ public class ObjectSteps {
     // =========================
     @Given("the base URL is {string} and endpoint is {string}")
     public void setBaseAndEndpoint(String base, String end) {
-
         baseUrl = resolveValue(base, "BASE_URL");
         endpoint = resolveValue(end, "ENDPOINT_1");
     }
@@ -87,7 +90,7 @@ public class ObjectSteps {
         baseUrl = resolveValue(base, "BASE_URL");
         endpoint = resolveValue(end, "ENDPOINT_1");
 
-        request = RestAssured.given(); // reset (no header)
+        request = RestAssured.given(); // reset
 
         response = request.when().get(baseUrl + endpoint);
     }
@@ -130,7 +133,7 @@ public class ObjectSteps {
     }
 
     // =========================
-    // VALIDATIONS (TestNG)
+    // VALIDATIONS
     // =========================
     @Then("the status code should be {int}")
     public void validateStatus(int code) {
@@ -213,6 +216,35 @@ public class ObjectSteps {
     }
 
     // =========================
+    // DELETE
+    // =========================
+    @When("user deletes the object {string}")
+    public void deleteObject(String id) {
+        response = given().when().delete("/objects/" + id);
+    }
+
+    @When("user deletes already deleted objects")
+    public void deleteMultiple(DataTable dataTable) {
+        for (String id : dataTable.asList()) {
+            response = given().when().delete("/objects/" + id);
+            System.out.println(response.getStatusCode());
+        }
+    }
+
+    @When("user sends DELETE to {string}")
+    public void deleteInvalid(String endpoint) {
+        response = given().when().delete(endpoint);
+    }
+
+    @When("user sends GET requests to {string} with invalid IDs")
+    public void multipleInvalidGet(String endpoint, DataTable dataTable) {
+        for (String id : dataTable.asList()) {
+            response = given().when().get(endpoint + "/" + id);
+            System.out.println(response.getStatusCode());
+        }
+    }
+
+    // =========================
     // HELPERS
     // =========================
     private String resolveValue(String value, String key) {
@@ -223,11 +255,9 @@ public class ObjectSteps {
     }
 
     private String resolveApiKey(String key) {
-
         if (key.equals("<API_Key>")) {
             return ExcelReader.getData("Sheet1", "API_KEY");
         }
-
         return key;
     }
 

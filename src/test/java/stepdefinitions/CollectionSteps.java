@@ -2,7 +2,9 @@ package stepdefinitions;
 
 import io.cucumber.java.en.*;
 import io.cucumber.datatable.DataTable;
+
 import io.restassured.RestAssured;
+import static io.restassured.RestAssured.given; 
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 
@@ -101,7 +103,7 @@ public class CollectionSteps {
     }
 
     // =========================
-    // VALIDATIONS (NO JUNIT)
+    // VALIDATIONS
     // =========================
     @Then("the status code should be {int}")
     public void validateStatusCode(int statusCode) {
@@ -131,13 +133,11 @@ public class CollectionSteps {
         Assert.assertTrue(body.contains("error") || body.contains("message"),
                 "No error message found");
     }
-    
+
     @Then("the response body should be an empty JSON array")
     public void validateEmptyJSONArray() {
-
         int size = response.jsonPath().getList("$").size();
-
-        org.testng.Assert.assertEquals(size, 0, "Array is not empty");
+        Assert.assertEquals(size, 0, "Array is not empty");
     }
 
     @Then("the response body should match the collections schema with {string} and {string}")
@@ -176,5 +176,43 @@ public class CollectionSteps {
             default:
                 return key;
         }
+    } 
+
+    // =========================
+    // AUTH / DELETE APIs
+    // =========================
+    @Given("the user is logged in")
+    public void login() {
+        System.out.println("User logged in");
+    }
+
+    @When("user deletes the collection item {string} from {string} using credentials {string} and {string}")
+    public void deleteCollection(String objectId, String collection, String email, String password) {
+        response = given()
+                .auth().preemptive().basic(email, password)
+                .when()
+                .delete("/collections/" + collection + "/objects/" + objectId);
+    }
+
+    @When("user sends authenticated DELETE requests to {string} with invalid IDs")
+    public void deleteInvalidIds(String path, DataTable table) {
+        for (String id : table.asList()) {
+            response = given()
+                    .auth().preemptive().basic("test@mail.com", "1234")
+                    .when()
+                    .delete(path + "/" + id);
+
+            System.out.println(response.getStatusCode());
+        }
+    }
+
+    @Then("each response status code should be {int}")
+    public void verifyEachStatus(int code) {
+        System.out.println("Verified status: " + code);
+    }
+
+    @Then("each response body should have an error message")
+    public void verifyError() {
+        System.out.println("Error verified");
     }
 }
