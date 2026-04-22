@@ -113,9 +113,10 @@ Feature: TS15 - Authenticated Collections API
 
   #Author: Shameetha Ravikumar (TS-07/08/12)
 
-  Scenario Outline: TC47 - POST /collections/{name}/objects with valid payload returns 200
-    When I add a collection item using Excel row <rowIndex>
-    Then the add-item response should be valid with all fields
+  Scenario Outline: TC47 - Add valid collection item
+    When I add a collection item from Excel row <rowIndex> into collection "products"
+    Then the response status should be 200
+    And the response should contain created item with all fields
     And the response Content-Type should contain "application/json"
 
     Examples:
@@ -124,26 +125,38 @@ Feature: TS15 - Authenticated Collections API
       | 1        |
       | 2        |
       | 3        |
+
+
+  Scenario Outline: TC48 - Add item to another user's collection
+    When I add a collection item from Excel row <rowIndex> into collection "other-user-collection"
+    Then the response status should be 200
+    And item should be created in current user's collection
+    And the response Content-Type should contain "application/json"
+
+    Examples:
+      | rowIndex |
+      | 0        |
+
+
+  Scenario Outline: TC49 - Missing name field (KNOWN DEFECT)
+    When I add a collection item from Excel row <rowIndex> into collection "products"
+    Then the response status should be 200
+    And the response Content-Type should contain "application/json"
+
+    Examples:
+      | rowIndex |
       | 4        |
+
+
+  Scenario Outline: TC50 - Malformed payload
+    When I add a collection item from Excel row <rowIndex> into collection "products"
+    Then the response status should be 200
+    And the response should contain generated id
+    And the response Content-Type should contain "application/json"
+
+    Examples:
+      | rowIndex |
       | 5        |
-
-
-  Scenario: TC48 - POST to another user's collection creates item in current user's collection
-    When I POST to another user's collection "other-user-collection"
-    Then the response should be 200 and item created in current user's collection
-    And the response Content-Type should contain "application/json"
-
-
-  Scenario: TC49 - POST collection item with missing name field returns 200 (known defect)
-    When I add a collection item with missing name field in collection "products"
-    Then the response is 200 as a known defect for missing name
-    And the response Content-Type should contain "application/json"
-
-
-  Scenario: TC50 - POST collection item with malformed payload returns 200
-    When I add a collection item with malformed payload in collection "products"
-    Then the malformed payload response should be 200 with id present
-    And the response Content-Type should contain "application/json"
 
   #Author Varshinee
 
