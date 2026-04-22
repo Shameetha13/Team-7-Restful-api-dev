@@ -20,26 +20,48 @@ Feature: Authenticated Collections API
     When user sends authenticated DELETE to "/collections/other-user-coll/objects/someId"
     Then the status code should be 404
  
-#Author: Kamala Kannan (TS-01/05/09)
  
-  Scenario: Authenticated GET /collections returns 200
-    When user sends authenticated GET to "/collections"
-    Then the status code should be 200
+#Author: Kamala Kannan (TS-09)
 
-  Scenario: Empty collections list still returns 200
-    When user sends authenticated GET to "/collections"
+   Scenario Outline: TC-036 - Authenticated GET collections with existing collections returns 200
+    Given the API key is "<api_key>"
+    When user sends GET to "<base_url>/<endpoint>"
     Then the status code should be 200
+    And the response header "Content-Type" should be present
+    And the response time should be below 5000 ms
+    And the response body should match the collections schema with "collectionName" and "objectCount"
 
-  
-  Scenario: GET /collections with invalid API key returns 403
-    When user sends GET to "/collections" with invalid key "bad-key-xyz"
+    Examples:
+      | base_url   | endpoint     | api_key   |
+      | <BASE_URL> | <EndPoint_2> | <API_KEY> |
+
+
+  Scenario Outline: TC-037 - Authenticated GET collections with no collections returns 200 with empty array
+    Given the API key is "<api_key>"
+    When user sends GET to "<base_url>/<endpoint>"
+    Then the status code should be 200
+    And the response header "Content-Type" should be present
+    And the response time should be below 5000 ms
+    And the response body should be an empty JSON array
+
+    Examples:
+      | base_url   | endpoint     | api_key      |
+      | <BASE_URL> | <EndPoint_2> | <no_col_API> |
+  Scenario: TC-038 - GET collections with invalid API key returns 403
+    Given the API key is "<invalid_API>"
+    When user sends GET to "<BASE_URL>/<EndPoint_2>"
     Then the status code should be 403
+    And the response status text should be "Forbidden"
+    And the response time should be below 5000 ms
     And the response body should have an error message
 
-  
-  Scenario: GET /collections with no API key returns 403
-    When user sends unauthenticated GET to "/collections"
+
+  Scenario: TC-039 - GET collections with no API key returns 403
+    Given no API key header is sent
+    When user sends GET to "<BASE_URL>/<EndPoint_2>"
     Then the status code should be 403
+    And the response status text should be "Forbidden"
+    And the response time should be below 5000 ms
   
     
 #Author : Manish (TS-11/13/14)
