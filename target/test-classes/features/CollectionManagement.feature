@@ -56,12 +56,18 @@ Scenario Outline: TC-044 - GET objects for a collection returns appropriate list
       | products        |
       | test            |
 
-Scenario: TC-045 - GET objects for a non-existing collection returns empty list
-    When I send a GET request to "/collections/randomCollectionXYZ123/objects"
+Scenario Outline: TC-045 - GET objects for a non-existing collection returns empty list
+    When I send a GET request to "/collections/<collectionName>/objects"
     Then the response status should be 200 OK
     And the response Content-Type should contain "application/json"
     And the response body should contain an empty list
     And the response body should indicate no items found for the collection
+    
+    Examples:
+      | collectionName  |
+      | random          |
+      | test123         |
+      | randomtest      | 
 
 Scenario: TC-046 - GET objects response time is within acceptable limit
     When I send a GET request to "/collections/products/objects" and measure response time
@@ -69,27 +75,27 @@ Scenario: TC-046 - GET objects response time is within acceptable limit
     And the response time should be within 2000 ms
 
 Scenario Outline: TC-051 - PUT update object with valid data returns 200
-    When I send a PUT request to "/collections/<collectionName>/objects/<objectId>" with a valid full payload
+    When I send a PUT request to "/collections/<collectionName>/objects/{objectId}" using row "<rowNum>" with a valid full payload
     Then the response status should be 200 OK
     And the response Content-Type should contain "application/json"
     And the response body should contain the fully updated object
     And the response body should reflect all updated values from the request
     And the response time should be within 2000 ms
 
-    Examples:
-      |  collectionName  |  objectId  |
-      | <collectionName> | <objectId> |
+Examples:
+  |  collectionName  |  objectId  |
+  |     products     |     103    |
+  |     products     |     102    |
+  |     products     |     101    |
 
-Scenario Outline: TC-052 - PUT update with missing mandatory fields returns 400 Bad Request
-    When I send a PUT request to "/collections/<collectionName>/objects/<objectId>" with missing required fields
-    Then the response status should be 400 Bad Request
-    And the response Content-Type should contain "application/json"
-    And the response body should indicate missing or null required fields
-
-    Examples:
+Scenario: TC-052 - PUT update with missing mandatory fields returns 400 Bad Request
+    When I send a PUT request with missing required fields:
       | collectionName | objectId |
       | products       | 12345    |
       | products       | 67890    |
+    Then the response status should be 400 Bad Request
+    And the response Content-Type should contain "application/json"
+    And the response body should indicate missing or null required fields
 
 Scenario: TC-053 - PUT update on another user's collection should not allow access
     Given another user also has a collection
@@ -130,8 +136,10 @@ Scenario Outline: TC-057 - PATCH response time is within acceptable limit
     And the response time should be within 2000 ms
 
     Examples:
-      | collectionName | objectId |
-      | <collectionName> | <objectId> |
+      |  collectionName  |  objectId  |
+      |     products     |     103    |
+      |     products     |     102    |
+      |     products     |     101    |
     
     
 #Author: Shameetha Ravikumar (TS-07/08/12)
