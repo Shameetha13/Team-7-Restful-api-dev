@@ -1,46 +1,58 @@
 package stepdefinitions;
 
 import io.cucumber.java.en.*;
+import io.restassured.RestAssured;
+import io.restassured.specification.RequestSpecification;
+import io.restassured.http.ContentType;
 import io.restassured.response.Response;
-import static io.restassured.RestAssured.*;
+import static org.hamcrest.Matchers.*;
 
 public class CollectionSteps {
 
-    Response response;
+    private RequestSpecification request;
+    private Response response;
+    private String requestedId;
 
-    @Given("the user is logged in")
-    public void login() {
-        // simple placeholder (no auth logic)
-        System.out.println("User logged in");
+
+    @Given("The user is already registered and their API key is valid")
+    public void setValidApiKey() {
+        request = RestAssured.given()
+                .header("Authorization", "Bearer valid_api_key_123");
+    }
+    
+    @When("GET request is sent for collection {string} and object ID {string}")
+    public void sendGetRequest(String collection, String objectId) {
+        requestedId = objectId;
+        response = request.when()
+                .get("/" + collection + "/" + objectId);
     }
 
-    @When("user deletes the collection item {string} from {string} using credentials {string} and {string}")
-    public void deleteCollection(String objectId, String collection, String email, String password) {
-        response = given()
-                .auth().preemptive().basic(email, password)
-                .when()
-                .delete("/collections/" + collection + "/objects/" + objectId);
+    @Then("the response status code should be {int}")
+	public void checkResponseCode(int code) {
+		response.then().statusCode(code);
+	}
+
+    @Then("the value of {string} field in response should match with that in request")
+    public void verifyIdMatch(String fieldName) {
+        response.then()
+                .body(fieldName, equalTo(requestedId));
     }
 
-    @When("user sends authenticated DELETE requests to {string} with invalid IDs")
-    public void deleteInvalidIds(String path, io.cucumber.datatable.DataTable table) {
-        for (String id : table.asList()) {
-            response = given()
-                    .auth().preemptive().basic("test@mail.com", "1234")
-                    .when()
-                    .delete(path + "/" + id);
-
-            System.out.println(response.getStatusCode());
-        }
+    @Given("The API key is invalid")
+    public void setInvalidApiKey() {
+        request = RestAssured.given()
+                .header("Authorization", "Bearer invalid_key_abc");
     }
 
-    @Then("each response status code should be {int}")
-    public void verifyEachStatus(int code) {
-        System.out.println("Verified status: " + code);
+    @Then("the error message in response body should contain {string}")
+    public void verifyErrorMessage(String expectedMessage) {
+        response.then()
+            .assertThat()
+            .body("error", containsString(expectedMessage));
     }
 
-    @Then("each response body should have an error message")
-    public void verifyError() {
-        System.out.println("Error verified");
+    @Given("The API key is valid")
+    public void setGenericValidKey() {
+        setValidApiKey(); 
     }
 }

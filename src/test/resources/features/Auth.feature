@@ -1,5 +1,5 @@
-   #Author: Shameetha Ravikumar (TS-07/08/12)
-   Feature: User Authentication
+#Author: Shameetha Ravikumar (TS-07/08/12)
+Feature: User Authentication
 
   Background:
     Given the authentication API is accessible with a valid API key

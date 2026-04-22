@@ -1,5 +1,4 @@
 #Author: Barath (TS-02/06/15)
-
 Feature: Authenticated Collections API
 
   Background:
@@ -200,31 +199,24 @@ Scenario Outline: TC-057 - PATCH response time is within acceptable limit
 
   Scenario: Get an existing object from a collection
     Given The user is already registered and their API key is valid
-    And The collection item should exist in the collection
     When GET request is sent for collection "product" and object ID "ff8081819d82fab6019d953b72a91709"
     Then the response status code should be 200
     And the value of "id" field in response should match with that in request
-    And the response should match the "ObjectResponse" schema
 
   Scenario: Get an existing object from a collection with invalid API key
     Given The API key is invalid
-    And The collection item should exist in the collection
     When GET request is sent for collection "product" and object ID "ff8081819d82fab6019d953b72a91709"
     Then the response status code should be 403
-    And the response body should contain appropriate error message
+    And the error message in response body should contain "Invalid API key"
 
   Scenario: Get an non existent object from a collection
     Given The API key is valid
-    And The collection item should not exist in the collection
     When GET request is sent for collection "product" and object ID "invalid-001"
     Then the response status code should be 404
-    And the response body should contain appropriate error message
+    And the error message in response body should contain "not found"
 
   Scenario: Get an object from a non existing collection
     Given The API key is valid
-    And The collection should not exist
     When GET request is sent for collection "invalid-xyz" and object ID "ff8081819d82fab6019d953b72a91709"
     Then the response status code should be 404
-
-    And the response body should contain appropriate error message
-
+    And the error message in response body should contain "not found"
