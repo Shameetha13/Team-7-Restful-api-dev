@@ -6,19 +6,40 @@ Feature: Authenticated Collections API
     Given the base API is configured
     And the user is logged in
 
- Scenario: TC58 - DELETE existing collection item returns 200
-    Given a collection item exists in "products"
-    When user deletes the collection item from "products"
+ Scenario Outline: TC58 - DELETE existing collection item returns 200
+    Given a collection item exists in "<collectionName>"
+    When user deletes the collection item "<objectId>" from "<collectionName>" using credentials "<email>" and "<password>"
     Then the status code should be 200
+    And Response status line contains "200 OK"
+    And Response time less than 3000 ms
 
-  Scenario: TC59 - DELETE non-existent collection item returns 404
-    When user sends authenticated DELETE to "/collections/products/objects/nonexistent-item-id"
-    Then the status code should be 404
-    And the response body should have an error message
+  Examples:
+    | email                        | password   | collectionName | objectId                         |
+    | shameek3456@gmail.com        | Shamee@123 | products       | ff8081819d82fab6019da97523252b99 |
+    | shameek345@gmail.com         | Shamee@123 | products       | ff8081819d82fab6019da97517962b98 |
+    | barathk345@gmail.com         | Barath@123 | products       | ff8081819d82fab6019da974fdcc2b97 |
+    | manish345k@gmail.com         | Manish@123 | products       | ff8081819d82fab6019da974ed702b96 |
+    | kamalakannan345k@gmail.com   | Kannan@123 | products       | ff8081819d82fab6019da974dd9d2b95 |
+    | varshinee345k@gmail.com      | Shinee@123 | products       | ff8081819d82fab6019da975ed8e2b9c |
 
-  Scenario: TC60 - DELETE from another user collection returns 404
-    When user sends authenticated DELETE to "/collections/other-user-coll/objects/someId"
-    Then the status code should be 404
+  Scenario: TC59 - DELETE non-existent collection item returns 404 using DataTable
+  When user sends authenticated DELETE requests to "/collections/products/objects" with invalid IDs
+    | invalidId   |
+    | invalid-001 |
+    | invalidv@&  |
+    | nnn         |
+    | mmm         |
+  Then each response status code should be 404
+  And each response status line contains "Not Found"
+  And each response time less than 2000 ms
+  And each response body should have an error message
+
+  Scenario Outline: TC60 - DELETE from another user collection returns 404
+  When user sends authenticated DELETE to "/collections/<collectionPath>/objects/<objectId>"
+  Then the status code should be 404
+  And Response status line contains "Not Found"
+  And Response time less than 2000 ms
+
  
 #Author: Kamala Kannan (TS-01/05/09)
  

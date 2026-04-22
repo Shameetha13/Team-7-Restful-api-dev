@@ -1,25 +1,81 @@
 package utils;
 
-import java.io.FileInputStream;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import java.io.FileInputStream;
+import java.io.IOException;
 
 public class ExcelUtility {
 
-    public String getDataFromExcel(String sheetName, int rowNum, int cellNum) throws Exception {
+    private static final String EXCEL_PATH = System.getProperty("user.dir") 
+                                             + "/src/test/resources/testdata/TestData.xlsx";
 
-        FileInputStream fis = new FileInputStream("./testdata/testscriptdata.xlsx");
-        Workbook wb = WorkbookFactory.create(fis);
+    private static Workbook getWorkbook(String sheetName) throws IOException {
+        FileInputStream fis = new FileInputStream(EXCEL_PATH);
+        return new XSSFWorkbook(fis);
+    }
 
-        Sheet sheet = wb.getSheet(sheetName);
-        Row row = sheet.getRow(rowNum);
-        Cell cell = row.getCell(cellNum);
+    public static String getCellData(String sheetName, int rowIndex, int colIndex) {
+        try {
+            Workbook workbook = getWorkbook(sheetName);
+            Sheet sheet       = workbook.getSheet(sheetName);
+            Row row           = sheet.getRow(rowIndex);
+            Cell cell         = row.getCell(colIndex);
 
-        DataFormatter formatter = new DataFormatter();
-        String data = formatter.formatCellValue(cell);
+            DataFormatter formatter = new DataFormatter();
+            return formatter.formatCellValue(cell).trim();
 
-        wb.close();
-        fis.close();
+        } catch (Exception e) {
+            System.out.println("ExcelUtils Error - getCellData: " + e.getMessage());
+            return "";
+        }
+    }
 
-        return data;
+    public static int getColumnIndex(String sheetName, String columnName) {
+        try {
+            Workbook workbook = getWorkbook(sheetName);
+            Sheet sheet       = workbook.getSheet(sheetName);
+            Row headerRow     = sheet.getRow(0);
+
+            for (Cell cell : headerRow) {
+                if (cell.getStringCellValue().trim().equalsIgnoreCase(columnName)) {
+                    return cell.getColumnIndex();
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("ExcelUtils Error - getColumnIndex: " + e.getMessage());
+        }
+        return -1;
+    }
+
+    public static int getRowIndex(String sheetName, String collectionName) {
+        try {
+            Workbook workbook = getWorkbook(sheetName);
+            Sheet sheet       = workbook.getSheet(sheetName);
+
+            for (Row row : sheet) {
+                if (row.getRowNum() == 0) continue; // Skip header
+                Cell cell = row.getCell(0);
+                if (cell != null && cell.getStringCellValue().trim()
+                        .equalsIgnoreCase(collectionName)) {
+                    return row.getRowNum();
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("ExcelUtils Error - getRowIndex: " + e.getMessage());
+        }
+        return -1;
+    }
+
+    public static int getRowCount(String sheetName) {
+        try {
+            Workbook workbook = getWorkbook(sheetName);
+            Sheet sheet       = workbook.getSheet(sheetName);
+            return sheet.getLastRowNum(); // Row 0 is header
+        } catch (Exception e) {
+            System.out.println("ExcelUtils Error - getRowCount: " + e.getMessage());
+            return 0;
+        }
     }
 }
