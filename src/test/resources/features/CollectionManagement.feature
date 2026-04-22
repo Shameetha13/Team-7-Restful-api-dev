@@ -144,3 +144,34 @@ Feature: TS15 - Authenticated Collections API
     When I add a collection item with malformed payload in collection "products"
     Then the malformed payload response should be 200 with id present
     And the response Content-Type should contain "application/json"
+
+  #Author Varshinee
+
+  Scenario: Get an existing object from a collection
+    Given The user is already registered and their API key is valid
+    And The collection item should exist in the collection
+    When GET request is sent for collection "product" and object ID "ff8081819d82fab6019d953b72a91709"
+    Then the response status code should be 200
+    And the value of "id" field in response should match with that in request
+    And the response should match the "ObjectResponse" schema
+
+  Scenario: Get an existing object from a collection with invalid API key
+    Given The API key is invalid
+    And The collection item should exist in the collection
+    When GET request is sent for collection "product" and object ID "ff8081819d82fab6019d953b72a91709"
+    Then the response status code should be 403
+    And the response body should contain appropriate error message
+
+  Scenario: Get an non existent object from a collection
+    Given The API key is valid
+    And The collection item should not exist in the collection
+    When GET request is sent for collection "product" and object ID "invalid-001"
+    Then the response status code should be 404
+    And the response body should contain appropriate error message
+
+  Scenario: Get an object from a non existing collection
+    Given The API key is valid
+    And The collection should not exist
+    When GET request is sent for collection "invalid-xyz" and object ID "ff8081819d82fab6019d953b72a91709"
+    Then the response status code should be 404
+    And the response body should contain appropriate error message
