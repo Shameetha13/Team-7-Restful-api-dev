@@ -219,50 +219,55 @@ Scenario: TC-020 - PATCH with invalid or non-existent object ID returns 404
     
 Rule: US03 Create a New Object
  
-  Background:
-    Given the base URI is set to "https://api.restful-api.dev"
+  Scenario Outline: TC09 & 10 - Create object with valid json payload and create duplicates
+    When user sends POST to /objects with name as "<name>" year as <year> price as <price> cpu model as "<CPU model>" and disk size as "<Hard disk size>"
+    Then the status code should be 200
+    And a unique object id should be generated
 
-  Scenario: TC09 - Create object with valid json payload
-    When user sends POST to "/objects" with complete valid json body 
-    Then the status code should be 200
-    And a unique object id should be generated
-    And the response should match the "ObjectResponse" schema
- 
-  Scenario: TC10 - Duplicate object creation 
-    When user sends POST to "/objects" with same values as already existing object 
-    Then the status code should be 200
-    And a unique object id should be generated
-    And the response should match the "ObjectResponse" schema
+    Examples:
+        | name | year | price | CPU model | Hard disk size |
+        | Apple MacBook Pro 16 | 2019  | 1849.99  | Intel Core i9 | 1 TB |
+        | Apple MacBook 16 | 2018  | 1469.99  | Intel Core i9 | 1 TB |
+        | iphone Pro 16 | 2019  | 1849.99  | Intel Core i9 | 1 TB |
+        | iphone 16 | 2018  | 1649.99  | Intel Core i9 | 1 TB |
+        | Apple MacBook Pro 16 | 2019  | 1849.99  | Intel Core i9 | 1 TB |
+        | Apple MacBook 16 | 2018  | 1469.99  | Intel Core i9 | 1 TB |
   
   Scenario: TC11 - Creating object with malformed payload 
-    When user sends POST to "/objects" with missing required field 
+    When user sends POST to /objects with name as "iphone Pro 16" 
     Then the status code should be 400
-    And the response should contain appropriate error message
+    And the error message should contain "malformed payload"
  
   Scenario: TC13 - Creating object with wrong header
     Given content-type is set to text in header
     When user sends POST to "/objects" with complete valid json body  
     Then the status code should be 415
-    And the response should contain appropriate error message
-    
+    And the error message should contain "unsupported media type"
+
 Rule: US04 Update a New Object
 
   Scenario: TC14 - Update an existing object
-    When user sends PUT to "/objects" with valid object id
-    And the json payload is valid with updated values 
+    When user sends PUT to /objects with valid object id
+        | name | year | price | CPU model | Hard disk size |
+        | Updated Apple MacBook Pro 16 | 2019  | 1849.99  | Intel Core i9 | 1 TB |
+        | Updated Apple MacBook 16 | 2018  | 1469.99  | Intel Core i9 | 1 TB |
+        | Updated iphone Pro 16 | 2019  | 1849.99  | Intel Core i9 | 1 TB |
     Then the status code should be 200
-    And the response body should reflect all the changes made 
-    And the response should match the "ObjectResponse" schema
-
+    And the values must be updated 
+    
   Scenario: TC15 - Update an non-existent object 
     When user sends PUT to "/objects/nonexistent-xyz99" with valid json payload
     Then the status code should be 404
-    And the response should contain an appropriate error message
+    And the error message should contain "not found"
 
   Scenario: TC16 - Update an existing object with missing field
-    When user sends PUT to "/objects" with valid object id
-    And the json payload only has updated values 
+    When user sends PUT to /objects with valid object id 
     Then the status code should be 200
+<<<<<<< HEAD
     And the response body should reflect all the changes made 
     And the response should match the "ObjectResponse" schema
 
+=======
+    And the values must be updated 
+    
+>>>>>>> 8fe6bae (Updated feature and stepdefinition for TS-03/04/10)

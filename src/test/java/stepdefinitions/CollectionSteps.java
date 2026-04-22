@@ -17,8 +17,15 @@ import org.testng.Assert;
 public class CollectionSteps {
 
     RequestSpecification request;
-    Response response;
+    private RequestSpecification request;
+    private Response response;
+    private String requestedId;
 
+
+    @Given("The user is already registered and their API key is valid")
+    public void setValidApiKey() {
+        request = RestAssured.given()
+                .header("Authorization", "Bearer valid_api_key_123");
     String baseUrl;
     String endpoint;
     String apiKey;
@@ -185,15 +192,29 @@ public class CollectionSteps {
     public void login() {
         System.out.println("User logged in");
     }
-
-    @When("user deletes the collection item {string} from {string} using credentials {string} and {string}")
-    public void deleteCollection(String objectId, String collection, String email, String password) {
-        response = given()
-                .auth().preemptive().basic(email, password)
-                .when()
-                .delete("/collections/" + collection + "/objects/" + objectId);
+    
+    @When("GET request is sent for collection {string} and object ID {string}")
+    public void sendGetRequest(String collection, String objectId) {
+        requestedId = objectId;
+        response = request.when()
+                .get("/" + collection + "/" + objectId);
     }
 
+    @Then("the response status code should be {int}")
+	public void checkResponseCode(int code) {
+		response.then().statusCode(code);
+	}
+
+    @Then("the value of {string} field in response should match with that in request")
+    public void verifyIdMatch(String fieldName) {
+        response.then()
+                .body(fieldName, equalTo(requestedId));
+    }
+
+    @Given("The API key is invalid")
+    public void setInvalidApiKey() {
+        request = RestAssured.given()
+                .header("Authorization", "Bearer invalid_key_abc");
     @When("user sends authenticated DELETE requests to {string} with invalid IDs")
     public void deleteInvalidIds(String path, DataTable table) {
         for (String id : table.asList()) {
@@ -206,13 +227,15 @@ public class CollectionSteps {
         }
     }
 
-    @Then("each response status code should be {int}")
-    public void verifyEachStatus(int code) {
-        System.out.println("Verified status: " + code);
+    @Then("the error message in response body should contain {string}")
+    public void verifyErrorMessage(String expectedMessage) {
+        response.then()
+            .assertThat()
+            .body("error", containsString(expectedMessage));
     }
 
-    @Then("each response body should have an error message")
-    public void verifyError() {
-        System.out.println("Error verified");
+    @Given("The API key is valid")
+    public void setGenericValidKey() {
+        setValidApiKey(); 
     }
 }
