@@ -20,6 +20,7 @@ Feature: Authenticated Collections API
     When user sends authenticated DELETE to "/collections/other-user-coll/objects/someId"
     Then the status code should be 404
  
+ 
 #Author: Kamala Kannan (TS-01/05/09)
  
   Scenario: Authenticated GET /collections returns 200

@@ -19,6 +19,7 @@ Feature: Authenticated Collections API
   Scenario: TC60 - DELETE from another user collection returns 404
     When user sends authenticated DELETE to "/collections/other-user-coll/objects/someId"
     Then the status code should be 404
+    
  
 #Author: Kamala Kannan (TS-01/05/09)
  
@@ -172,7 +173,7 @@ Scenario Outline: TC-057 - PATCH response time is within acceptable limit
     When I add a collection item with malformed payload in collection "products"
     Then the malformed payload response should be 200 with id present
     And the response Content-Type should contain "application/json"
- 
+    
  
 #Author Varshinee
 
