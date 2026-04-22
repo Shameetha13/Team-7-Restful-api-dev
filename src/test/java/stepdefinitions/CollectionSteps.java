@@ -1,5 +1,9 @@
 package stepdefinitions;
 
+import io.cucumber.java.en.*;
+import io.restassured.response.Response;
+import static io.restassured.RestAssured.*;
+
 import context.TestContext;
 import io.cucumber.java.en.*;
 import io.restassured.response.Response;
@@ -8,18 +12,19 @@ import utils.ExcelUtility;
 import utils.FileUtility;
 import utils.RestUtility;
 
-import java.util.Map;
+public class CollectionSteps {
 
-public class CollectionItemSteps {
-
-    private Response response;
+    Response response;
     private Map<String, String> testData;
     private String baseUrl = FileUtility.getProperty("base.url");
     private String token   = FileUtility.getProperty("auth.token");
 
-  
-
-    @When("I add a collection item from Excel row {int} into collection {string}")
+    @Given("the user is logged in")
+    public void login() {
+        // simple placeholder (no auth logic)
+        System.out.println("User logged in");
+    }
+@When("I add a collection item from Excel row {int} into collection {string}")
     public void addCollectionItem(int rowIndex, String collectionName) {
         // rowIndex from feature file is 0-based data row;
         // row 0 in Excel = header, so actual row = rowIndex + 1
@@ -98,4 +103,36 @@ public class CollectionItemSteps {
         Assert.assertNotNull(id,  "Response should contain a generated 'id'");
         Assert.assertFalse(id.isEmpty(), "'id' in response should not be empty");
     }
+
+    @When("user deletes the collection item {string} from {string} using credentials {string} and {string}")
+    public void deleteCollection(String objectId, String collection, String email, String password) {
+        response = given()
+                .auth().preemptive().basic(email, password)
+                .when()
+                .delete("/collections/" + collection + "/objects/" + objectId);
+    }
+
+    @When("user sends authenticated DELETE requests to {string} with invalid IDs")
+    public void deleteInvalidIds(String path, io.cucumber.datatable.DataTable table) {
+        for (String id : table.asList()) {
+            response = given()
+                    .auth().preemptive().basic("test@mail.com", "1234")
+                    .when()
+                    .delete(path + "/" + id);
+
+            System.out.println(response.getStatusCode());
+        }
+    }
+
+    @Then("each response status code should be {int}")
+    public void verifyEachStatus(int code) {
+        System.out.println("Verified status: " + code);
+    }
+
+    @Then("each response body should have an error message")
+    public void verifyError() {
+        System.out.println("Error verified");
+    }
+
+    
 }

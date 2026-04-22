@@ -1,26 +1,49 @@
-Feature: TS15 - Authenticated Collections API
+#Author: Barath (TS-02/06/15)
+
+Feature: Authenticated Collections API
 
   Background:
     Given the base API is configured
     And the user is logged in
 
-  Scenario: TC58 - DELETE existing collection item returns 200
-    Given a collection item exists in "products"
-    When user deletes the collection item from "products"
+
+  Scenario Outline: TC58 - DELETE existing collection item returns 200
+    Given a collection item exists in "<collectionName>"
+    When user deletes the collection item "<objectId>" from "<collectionName>" using credentials "<email>" and "<password>"
+
     Then the status code should be 200
+    And Response status line contains "200 OK"
+    And Response time less than 3000 ms
 
+    Examples:
+      | email                      | password   | collectionName | objectId                         |
+      | shameek3456@gmail.com      | Shamee@123 | products       | ff8081819d82fab6019da97523252b99 |
+      | shameek345@gmail.com       | Shamee@123 | products       | ff8081819d82fab6019da97517962b98 |
+      | barathk345@gmail.com       | Barath@123 | products       | ff8081819d82fab6019da974fdcc2b97 |
+      | manish345k@gmail.com       | Manish@123 | products       | ff8081819d82fab6019da974ed702b96 |
+      | kamalakannan345k@gmail.com | Kannan@123 | products       | ff8081819d82fab6019da974dd9d2b95 |
+      | varshinee345k@gmail.com    | Shinee@123 | products       | ff8081819d82fab6019da975ed8e2b9c |
 
-  Scenario: TC59 - DELETE non-existent collection item returns 404
-    When user sends authenticated DELETE to "/collections/products/objects/nonexistent-item-id"
+  Scenario: TC59 - DELETE non-existent collection item returns 404 using DataTable
+    When user sends authenticated DELETE requests to "/collections/products/objects" with invalid IDs
+      | invalidId   |
+      | invalid-001 |
+      | invalidv@&  |
+      | nnn         |
+      | mmm         |
+    Then each response status code should be 404
+    And each response status line contains "Not Found"
+    And each response time less than 2000 ms
+    And each response body should have an error message
+
+  Scenario Outline: TC60 - DELETE from another user collection returns 404
+    When user sends authenticated DELETE to "/collections/<collectionPath>/objects/<objectId>"
     Then the status code should be 404
-    And the response body should have an error message
+    And Response status line contains "Not Found"
+    And Response time less than 2000 ms
 
 
-  Scenario: TC60 - DELETE from another user collection returns 404
-    When user sends authenticated DELETE to "/collections/other-user-coll/objects/someId"
-    Then the status code should be 404
-
-  #Author: Kamala Kannan US09
+  #Author: Kamala Kannan (TS-01/05/09)
 
 
   Scenario: Authenticated GET /collections returns 200
@@ -42,16 +65,24 @@ Feature: TS15 - Authenticated Collections API
     When user sends unauthenticated GET to "/collections"
     Then the status code should be 403
 
+
   #Author : Manish (TS-11/13/14)
 
-  Scenario: TC-044 - GET objects for a valid collection returns 200 with list
-    When I send a GET request to "/collections/products/objects"
+  Scenario Outline: TC-044 - GET objects for a collection returns appropriate list
+    When I send a GET request to "/collections/<collectionName>/objects"
+
     Then the response status should be 200 OK
     And the response Content-Type should contain "application/json"
     And the response body should contain a list of all objects in the collection
     And the response time should be within 2000 ms
 
+    Examples:
+      | collectionName |
+      | products       |
+      | test           |
+
   Scenario: TC-045 - GET objects for a non-existing collection returns empty list
+
     When I send a GET request to "/collections/randomCollectionXYZ123/objects"
     Then the response status should be 200 OK
     And the response Content-Type should contain "application/json"
@@ -63,21 +94,33 @@ Feature: TS15 - Authenticated Collections API
     Then the response status should be 200 OK
     And the response time should be within 2000 ms
 
-  Scenario: TC-051 - PUT update object with valid data returns 200
-    When I send a PUT request to "/collections/products/objects/{objectId}" with a valid full payload
+  Scenario Outline: TC-051 - PUT update object with valid data returns 200
+    When I send a PUT request to "/collections/<collectionName>/objects/<objectId>" with a valid full payload
+
     Then the response status should be 200 OK
     And the response Content-Type should contain "application/json"
     And the response body should contain the fully updated object
     And the response body should reflect all updated values from the request
     And the response time should be within 2000 ms
 
-  Scenario: TC-052 - PUT update with missing mandatory fields returns 400 Bad Request
-    When I send a PUT request to "/collections/products/objects/{objectId}" with missing required fields
+    Examples:
+      | collectionName   | objectId   |
+      | <collectionName> | <objectId> |
+
+  Scenario Outline: TC-052 - PUT update with missing mandatory fields returns 400 Bad Request
+    When I send a PUT request to "/collections/<collectionName>/objects/<objectId>" with missing required fields
+
     Then the response status should be 400 Bad Request
     And the response Content-Type should contain "application/json"
     And the response body should indicate missing or null required fields
 
+    Examples:
+      | collectionName | objectId |
+      | products       | 12345    |
+      | products       | 67890    |
+
   Scenario: TC-053 - PUT update on another user's collection should not allow access
+
     Given another user also has a collection
     When I send a PUT request to "/collections/products/objects/{objectId}" using another user's authorization
     Then the response status should be 200 OK
@@ -90,28 +133,40 @@ Feature: TS15 - Authenticated Collections API
     Then the response status should be 200 OK
     And the response time should be within 2000 ms
 
-  Scenario: TC-055 - PATCH update single attribute returns 200
-    When I send a PATCH request to "/collections/products/objects/{objectId}" with a single attribute update
+  Scenario Outline: TC-055 - PATCH update single attribute returns 200
+    When I send a PATCH request to "/collections/<collectionName>/objects/<objectId>" with a single attribute update
+
     Then the response status should be 200 OK
     And the response Content-Type should contain "application/json"
     And the response body should show the updated attribute value
     And other attributes should remain unchanged
     And the response time should be within 2000 ms
 
+    Examples:
+      | collectionName | objectId |
+      | products       | 101      |
+      | products       | 202      |
+
   Scenario: TC-056 - PATCH update with invalid data type still returns 200 (as per current behavior)
+
     When I send a PATCH request to "/collections/products/objects/{objectId}" with an invalid data type
     Then the response status should be 200 OK
     And the response Content-Type should contain "application/json"
     And the response body should reflect the updated attribute even with incorrect data type
     And other attributes should remain unchanged
 
-  Scenario: TC-057 - PATCH response time is within acceptable limit
-    When I send a PATCH request to "/collections/products/objects/{objectId}" with partial data and measure response time
+  Scenario Outline: TC-057 - PATCH response time is within acceptable limit
+    When I send a PATCH request to "/collections/<collectionName>/objects/<objectId>" with partial data and measure response time
     Then the response status should be 200 OK
     And the response time should be within 2000 ms
 
+    Examples:
+      | collectionName   | objectId   |
+      | <collectionName> | <objectId> |
+
 
   #Author: Shameetha Ravikumar (TS-07/08/12)
+
 
   Scenario Outline: TC47 - Add valid collection item
     When I add a collection item from Excel row <rowIndex> into collection "products"
@@ -187,4 +242,6 @@ Feature: TS15 - Authenticated Collections API
     And The collection should not exist
     When GET request is sent for collection "invalid-xyz" and object ID "ff8081819d82fab6019d953b72a91709"
     Then the response status code should be 404
+
     And the response body should contain appropriate error message
+
