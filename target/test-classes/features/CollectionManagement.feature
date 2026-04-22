@@ -52,9 +52,9 @@ Scenario Outline: TC-044 - GET objects for a collection returns appropriate list
     And the response time should be within 2000 ms
 
     Examples:
-      | collectionName          |
-      | products                |
-      | test                    |
+      | collectionName  |
+      | products        |
+      | test            |
 
 Scenario: TC-045 - GET objects for a non-existing collection returns empty list
     When I send a GET request to "/collections/randomCollectionXYZ123/objects"
@@ -77,7 +77,7 @@ Scenario Outline: TC-051 - PUT update object with valid data returns 200
     And the response time should be within 2000 ms
 
     Examples:
-      | collectionName | objectId |
+      |  collectionName  |  objectId  |
       | <collectionName> | <objectId> |
 
 Scenario Outline: TC-052 - PUT update with missing mandatory fields returns 400 Bad Request
