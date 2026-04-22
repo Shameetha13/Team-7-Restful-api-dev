@@ -1,4 +1,4 @@
-#Author: Barath (TS-02/06/15)
+#Author: Barath (TS-02/06)
 Feature:  - Object Operations
 
   Background:
@@ -39,60 +39,79 @@ Feature:  - Object Operations
     Then the status code should be 405
  
    
-  #Author: Kamala Kannan (TS-01/05/09)
-  
-   Given the base API is configured
+  #Author: Kamala Kannan (TS-05/09)
 
-  Scenario: Retrieve all public objects returns 200 with JSON array
-    When user sends GET to "/objects"
+  Scenario Outline: TC-001 - Retrieve all public objects returns 200 with JSON array
+    Given the API key is "<api_key>"
+    When user sends GET to "<base_url>/<endpoint>"
     Then the status code should be 200
     And the response body should be a JSON array
-  
-  Scenario: Filter objects by multiple IDs returns only those objects
-    When user sends GET to "/objects" with param "id=3&id=5"
+    And the response schema should validate "id" as string and "name" as string
+    And the collection variable "TS-01-objectId" is set to the first object's id
+    And the collection variable "TS-01-nonexistobjectId" is set to last object's id plus 1
+
+    Examples:
+      | base_url   | endpoint     | api_key   |
+      | <BASE_URL> | <EndPoint_1> | <API_Key> |
+
+
+  Scenario Outline: TC-002 - Filter objects by specific IDs returns only matching objects
+    Given the API key is "<API_Key>"
+    When user sends GET to "<BASE_URL>/<EndPoint_1>" with param "id=<id1>&id=<id2>"
     Then the status code should be 200
-    And the JSON array should only have ids "3" and "5"
-  
-  Scenario: Non-existent ID returns 200 with empty array
-    When user sends GET to "/objects" with param "id=99999"
+    And the JSON array should only contain ids "<id1>" and "<id2>"
+    And the response schema should validate "id" as string and "name" as string
+
+    Examples:
+      | id1 | id2 |
+      | 3   | 5   |
+      | 1   | 2   |
+      | 7   | 10  |
+
+
+  Scenario: TC-003 - Non-existent ID returns 200 with empty array
+    Given the API key is "<API_Key>"
+    When user sends GET to "<BASE_URL>/<EndPoint_1>" with param "id=<TS-01-nonexistobjectId>"
     Then the status code should be 200
     And the response body should be an empty JSON array
- 
-  Scenario: Malformed ID returns 200 with empty array
-    When user sends GET to "/objects" with param "id=9xyz@#"
+    And the response schema should validate "id" as string and "name" as string
+
+
+  Scenario Outline: TC-004 - Malformed ID as query param returns 200 with empty array
+    Given the API key is "<API_Key>"
+    When user sends GET to "<BASE_URL>/<EndPoint_1>" with param "id=<id_param>"
     Then the status code should be 200
     And the response body should be an empty JSON array
-  
-  Scenario: GET all objects responds within 2000ms
-    When user sends GET to "/objects"
+    And the response schema should validate "id" as string and "name" as string
+
+    Examples:
+      | id_param  |
+      | 9xyz@#    |
+      | 9_xyz_@#  |
+      | abc!$%    |
+
+
+  Scenario: TC-005 - GET all objects responds within 2000ms without auth header
+    When user sends GET to "<BASE_URL>/<EndPoint_1>" without auth header
     Then the status code should be 200
     And the response time should be below 2000 ms
-  
-  Scenario: PATCH single attribute returns 200
+    And the response schema should validate "id" as string and "name" as string
+
+
+  Scenario: TC-018 - KNOWN BUG - Wrong data type accepted with 200 instead of 400
     Given a temporary object is created for testing
     When user sends PATCH to the test object with body:
       """
       {
         "data": {
-          "price": 1999.99
+          "price": "expensive"
         }
       }
       """
     Then the status code should be 200
-  
-  Scenario: KNOWN BUG - Wrong data type accepted with 200 instead of 400
-    Given a temporary object is created for testing
-    When user sends PATCH to the test object with body:
-      """
-      {
-        "data": {
-          "price": "very expensive"
-        }
-      }
-      """
-    Then the status code should be 200
-  
-  Scenario: KNOWN BUG - updatedAt field missing from PATCH response
+
+
+  Scenario: TC-019 - KNOWN BUG - updatedAt field missing from PATCH response
     Given a temporary object is created for testing
     When user sends PATCH to the test object with body:
       """
@@ -104,10 +123,50 @@ Feature:  - Object Operations
       """
     Then the status code should be 200
     And the response body should contain field "updatedAt"
-  
-  Scenario: PATCH with invalid ID returns 404
-    Given a temporary object is created for testing
-    When user sends PATCH to "/objects/invalid-id-abc123" with body:
+
+
+  Scenario Outline: TC-017 - PATCH single attribute with valid data returns 200
+    Given the base URL is "<base_url>" and endpoint is "<endpoint>"
+    When user sends PATCH to "/<endpoint>/<object_id>" with body:
+      """
+      {
+        "data": {
+          "price": <price>
+        }
+      }
+      """
+    Then the status code should be 200
+    And the response time should be below 5000 ms
+    And the response body should match the PATCH response schema
+    And the response body should contain field "updatedAt"
+
+    Examples:
+      | base_url   | endpoint     | object_id   | price   |
+      | <BASE_URL> | <EndPoint_1> | <Object_ID> | <price> |
+
+
+  Scenario Outline: TC-020 - PATCH with invalid or non-existent object ID returns 404
+    When user sends PATCH to "/<EndPoint_1>/<object_id>" with body:
+      """
+      {
+        "data": {
+          "price": 999
+        }
+      }
+      """
+    Then the status code should be 404
+    And the response body should have an error message
+    And the response time should be below 5000 ms
+
+    Examples:
+      | object_id         |
+      | invalid-b37cac2   |
+      | invalid-id-abc123 |
+      | 00000000          |
+
+
+  Scenario Outline: TC-021 - PATCH reserved object ID returns 405 Method Not Allowed
+    When user sends PATCH to "/<EndPoint_1>/<object_id>" with body:
       """
       {
         "data": {
@@ -115,20 +174,15 @@ Feature:  - Object Operations
         }
       }
       """
-    Then the status code should be 404
-    And the response body should have an error message
-
-  Scenario: PATCH reserved object (ID 1) returns 405
-    Given a temporary object is created for testing
-    When user sends PATCH to "/objects/1" with body:
-      """
-      {
-        "data": {
-          "price": 100
-        }
-      }
-      """
     Then the status code should be 405
+    And the response body should have an error message
+    And the response time should be below 5000 ms
+
+    Examples:
+      | object_id |
+      | 1         |
+      | 6         |
+      | 10        |
     
     
 #Author Varshinee
