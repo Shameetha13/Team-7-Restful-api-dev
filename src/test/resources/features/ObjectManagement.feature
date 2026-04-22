@@ -55,18 +55,17 @@ Feature:  - Object Operations
       | <BASE_URL> | <EndPoint_1> | <API_Key> |
 
 
-  Scenario Outline: TC-002 - Filter objects by specific IDs returns only matching objects
-    Given the API key is "<API_Key>"
-    When user sends GET to "<BASE_URL>/<EndPoint_1>" with param "id=<id1>&id=<id2>"
-    Then the status code should be 200
-    And the JSON array should only contain ids "<id1>" and "<id2>"
-    And the response schema should validate "id" as string and "name" as string
-
-    Examples:
-      | id1 | id2 |
-      | 3   | 5   |
-      | 1   | 2   |
-      | 7   | 10  |
+Scenario: TC-002 - Filter objects by specific IDs returns only matching objects
+  Given the API key is "<API_Key>"
+  And the following IDs are provided:
+    | id1 | id2 |
+    | 3   | 5   |
+    | 1   | 2   |
+    | 7   | 10  |
+  When user sends GET request with multiple id params
+  Then the status code should be 200
+  And the JSON array should only contain the provided ids
+  And the response schema should validate "id" as string and "name" as string
 
 
   Scenario: TC-003 - Non-existent ID returns 200 with empty array
@@ -145,25 +144,17 @@ Feature:  - Object Operations
       | <BASE_URL> | <EndPoint_1> | <Object_ID> | <price> |
 
 
-  Scenario Outline: TC-020 - PATCH with invalid or non-existent object ID returns 404
-    When user sends PATCH to "/<EndPoint_1>/<object_id>" with body:
-      """
-      {
-        "data": {
-          "price": 999
-        }
-      }
-      """
-    Then the status code should be 404
-    And the response body should have an error message
-    And the response time should be below 5000 ms
+Scenario: TC-020 - PATCH with invalid or non-existent object ID returns 404
+  Given the following invalid object IDs:
+    | object_id         |
+    | invalid-b37cac2   |
+    | invalid-id-abc123 |
+    | 00000000          |
 
-    Examples:
-      | object_id         |
-      | invalid-b37cac2   |
-      | invalid-id-abc123 |
-      | 00000000          |
-
+  When user sends PATCH requests with invalid IDs
+  Then the status code should be 404
+  And the response body should have an error message
+  And the response time should be below 5000 ms
 
   Scenario Outline: TC-021 - PATCH reserved object ID returns 405 Method Not Allowed
     When user sends PATCH to "/<EndPoint_1>/<object_id>" with body:
