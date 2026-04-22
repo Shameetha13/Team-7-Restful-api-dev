@@ -18,6 +18,7 @@ Feature:  - Object Operations
     | 5        |
     | 10       |
 
+
   Scenario: TC07 - Get object with invalid ID returns 404 using DataTable
     When user sends GET requests to "/objects" with invalid IDs
       | invalidId          |
@@ -36,10 +37,12 @@ Feature:  - Object Operations
     And each response time less than 2000 msms  
     
   Scenario Outline: TC22 - DELETE existing object returns 200
+
     Given a temporary object is created for testing
     When user deletes the object "<objectId>"
     Then the status code should be 200
     And Response status line contains "200 OK"
+
 
   Examples:
     | objectId |
@@ -79,31 +82,34 @@ Feature:  - Object Operations
   
    Given the base API is configured
 
+
   Scenario: Retrieve all public objects returns 200 with JSON array
     When user sends GET to "/objects"
     Then the status code should be 200
     And the response body should be a JSON array
-  
+
+
   Scenario: Filter objects by multiple IDs returns only those objects
     When user sends GET to "/objects" with param "id=3&id=5"
     Then the status code should be 200
     And the JSON array should only have ids "3" and "5"
-  
+
+
   Scenario: Non-existent ID returns 200 with empty array
     When user sends GET to "/objects" with param "id=99999"
     Then the status code should be 200
     And the response body should be an empty JSON array
- 
+
   Scenario: Malformed ID returns 200 with empty array
     When user sends GET to "/objects" with param "id=9xyz@#"
     Then the status code should be 200
     And the response body should be an empty JSON array
-  
+
   Scenario: GET all objects responds within 2000ms
     When user sends GET to "/objects"
     Then the status code should be 200
     And the response time should be below 2000 ms
-  
+
   Scenario: PATCH single attribute returns 200
     Given a temporary object is created for testing
     When user sends PATCH to the test object with body:
@@ -115,7 +121,7 @@ Feature:  - Object Operations
       }
       """
     Then the status code should be 200
-  
+
   Scenario: KNOWN BUG - Wrong data type accepted with 200 instead of 400
     Given a temporary object is created for testing
     When user sends PATCH to the test object with body:
@@ -127,7 +133,7 @@ Feature:  - Object Operations
       }
       """
     Then the status code should be 200
-  
+
   Scenario: KNOWN BUG - updatedAt field missing from PATCH response
     Given a temporary object is created for testing
     When user sends PATCH to the test object with body:
@@ -140,7 +146,7 @@ Feature:  - Object Operations
       """
     Then the status code should be 200
     And the response body should contain field "updatedAt"
-  
+
   Scenario: PATCH with invalid ID returns 404
     Given a temporary object is created for testing
     When user sends PATCH to "/objects/invalid-id-abc123" with body:
@@ -154,6 +160,7 @@ Feature:  - Object Operations
     Then the status code should be 404
     And the response body should have an error message
 
+
   Scenario: PATCH reserved object (ID 1) returns 405
     Given a temporary object is created for testing
     When user sends PATCH to "/objects/1" with body:
@@ -165,6 +172,7 @@ Feature:  - Object Operations
       }
       """
     Then the status code should be 405
+
     
     
 #Author Varshinee
@@ -217,3 +225,4 @@ Rule: US04 Update a New Object
     Then the status code should be 200
     And the response body should reflect all the changes made 
     And the response should match the "ObjectResponse" schema
+

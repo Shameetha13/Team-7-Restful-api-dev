@@ -11,6 +11,7 @@
     And the register response body should confirm account creation
     And the response time should be within 3000 ms
   
+  
   Scenario: TC27 - POST /register with duplicate email returns 409 Conflict
     When I register the same email address twice
     Then the register response status should be 409 Conflict
@@ -19,6 +20,7 @@
    Scenario: TC28 - KNOWN BUG-001: Weak password accepted with 200 instead of 400
     When I register with a weak password "1"
     Then the register response is 200 as a known BUG-001
+    
   
   Scenario: TC29 - POST /register without name field returns 400 Bad Request
     When I register without the name field
