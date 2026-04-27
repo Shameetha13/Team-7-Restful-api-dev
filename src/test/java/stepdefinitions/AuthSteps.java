@@ -110,5 +110,4 @@ public class AuthSteps {
         String actualEmail = response.jsonPath().getString("user.email");
         Assert.assertEquals(actualEmail, expectedEmail);
     }
-    
 }

@@ -1,4 +1,4 @@
-# Author Shameetha
+# Author Shameetha Ravikumar
 Feature: User Authentication - Register
 
   Background:

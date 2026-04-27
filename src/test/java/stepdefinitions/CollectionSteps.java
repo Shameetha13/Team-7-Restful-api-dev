@@ -20,6 +20,7 @@ import org.testng.Assert;
 public class CollectionSteps {
 
     private Response response;
+    
 	 // Author Shameetha
 	@When("I add a collection item from Excel sheet {string} at row {int} into collection {string}")
 	public void addCollectionItemFromExcel(String sheetName, int rowNum, String collection) {
