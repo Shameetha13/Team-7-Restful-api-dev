@@ -20,7 +20,6 @@ import org.testng.Assert;
 public class CollectionSteps {
 
     private Response response;
-
 	 // Author Shameetha
 	@When("I add a collection item from Excel sheet {string} at row {int} into collection {string}")
 	public void addCollectionItemFromExcel(String sheetName, int rowNum, String collection) {
@@ -103,7 +102,6 @@ public class CollectionSteps {
 		response.then().body("$", everyItem(hasKey("collectionName")));
 	}
 
-	
 	@When("user sends authenticated GET to {string} with no objects and key {string}")
 	public void getWithKey(String endpoint, String key) {
 		response = RestUtility.getWithKey(endpoint, key);

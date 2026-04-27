@@ -14,7 +14,6 @@ public class AuthRequest {
         this.name = name;
     }
 
-  
     public String getEmail() {
         return email;
     }

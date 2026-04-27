@@ -1,9 +1,9 @@
 Feature:
-# Author Kamala Kannan
+  # Author Kamala Kannan
   Rule: TS-01 Verify that a guest user can successfully retrieve a full list of all available public objects.
 
-Feature:
-# Author Barath
+  Feature:
+    # Author Barath
   Rule: TS-02 Verify that a guest user can view the full technical specifications of a specific object using the object ID.
     Scenario: TC-01 & 05 Verify user is able to retrieve all the available objects.
       When user sends GET to endpoint
@@ -19,7 +19,7 @@ Feature:
       And the response should have id <id>
       And the response header "Content-Type" should be "application/json"
       And the response time is below 3000 ms
-      
+
     Scenario: TC-02 Verify filtering functionality using multiple IDs in query parameters.
       Given object with id 1 and 3 exists
       When user sends GET to endpoint with query params
@@ -30,7 +30,7 @@ Feature:
         | id |
         | 1  |
         | 2  |
-        
+
     Scenario: TC-03 Verify user is able to fetch details using non-existent object ID.
       Given object with id "21" doesn't exists
       When user sends GET to endpoint with query params
@@ -50,15 +50,17 @@ Feature:
       Then the status code should be 200
       And the response header "Content-Type" should be "application/json"
       And the response body should contain an empty array
-# Author Kamala Kannan
+
+    # Author Kamala Kannan
+
   Rule: TS-05 Verify that a guest user can update a few fields without affecting other object fields(partial update).
 
       Examples:
         | id     |
         | 13100  |
         | 209657 |
-        
-# Author Barath
+
+    # Author Barath
   Rule: TS-06 Verify that a guest user can successfully delete an inaccurate or outdated item from the global list.
 
     Scenario: TC-17 Verify user is able to patch a single specific attribute of an existing object.
@@ -104,7 +106,7 @@ Feature:
       When DELETE is sent to endpoint for reserved object
       Then the status code should be 405
       And the appropriate error message "reserved" is present in response body
-      
+
     Scenario: TC-21 Verify appropriate error message is returned when ID of reserved object is used.
       Given the "Content-Type" of the request body is set to "application/json"
       When I send a PATCH request to endpoint with invalid object id "1" and price "1999.99"

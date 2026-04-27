@@ -23,8 +23,9 @@ Feature: Fetch single object from a collection
         | 0      | 200            |
         | 1      | 400            |
         | 2      | 200            |
-        
-  # Author: Barath (TS-02/06/15)
+
+
+    # Author: Barath (TS-02/06/15)
   Rule: TS-15 Verify that an authenticated user can successfully remove an item from their private collection.
 
     Scenario Outline: TC58 - DELETE existing collection item returns 200

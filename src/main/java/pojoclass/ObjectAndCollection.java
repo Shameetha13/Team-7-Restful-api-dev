@@ -32,7 +32,6 @@ public class ObjectAndCollection {
         public void setHardDisk(String hardDisk) { this.hardDisk = hardDisk; }
     }
 
- 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
 
