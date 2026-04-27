@@ -3,7 +3,29 @@ Feature: Fetch single object from a collection
 
   Background:
     Given the API URL "https://api.restful-api.dev" is up and running
-# Author: Barath (TS-02/06/15)
+
+  # Author: Shameetha Ravikumar (TS-07/08/12)
+
+  Rule: TS-12 Verify that an authenticated user can add a new item directly to a specific private collection.
+
+    Scenario Outline: TC47 to TC50 (Add valid collection item, Add collection item with missing field (Defect), Add collection item with malformed data) - Process Row <rowNum>
+      When I add a collection item from Excel sheet "data" at row <rowNum> into collection "products"
+      Then the response status code should be <expectedStatus>
+      And the "Content-Type" header of response should be "application/json"
+      And the collection response time should be within 8000 ms
+      And the response should have name from Excel row <rowNum>
+      And the response should have "year" from Excel row <rowNum>
+      And the response should have "price" from Excel row <rowNum>
+      And the response should have "cpu" from Excel row <rowNum>
+      And the response should have "harddisk" from Excel row <rowNum>
+
+      Examples:
+        | rowNum | expectedStatus |
+        | 0      | 200            |
+        | 1      | 400            |
+        | 2      | 200            |
+        
+  # Author: Barath (TS-02/06/15)
   Rule: TS-15 Verify that an authenticated user can successfully remove an item from their private collection.
 
 
@@ -12,7 +34,7 @@ Feature: Fetch single object from a collection
       Then the response status code should be 200
       And the "Content-Type" header of response should be "application/json"
       And the collection response time should be within 5000 ms
-# Author: Kamala Kannan (TS-01/05/09)
+    # Author: Kamala Kannan (TS-01/05/09)
   Rule: TS-09 Verify that an authenticated user can view a list of all their created private collections.
 
       Examples:
