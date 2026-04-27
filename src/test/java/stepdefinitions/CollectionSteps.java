@@ -1,13 +1,19 @@
 package stepdefinitions;
 
+
 import java.util.*;
+=======
+>>>>>>> refs/remotes/origin/TS-01/05/09
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.*;
 import io.restassured.RestAssured;
 import io.restassured.specification.RequestSpecification;
 import pojoclass.ObjectAndCollection;
 import io.restassured.response.Response;
+<<<<<<< HEAD
 import static org.testng.Assert.*;
+=======
+>>>>>>> refs/remotes/origin/TS-01/05/09
 import utils.ExcelUtility;
 import utils.FileUtility;
 import utils.RestUtility;
@@ -18,16 +24,47 @@ import org.testng.Assert;
 
 
 public class CollectionSteps {
-
-
+	
+// Author Kamala Kannan
 	private Response response;
+	
+	@When("user sends authenticated GET to {string}")
+	public void authenticatedGet(String endpoint) {
+		response = RestUtility.get(endpoint);
+	}
+
+
+	@And("the response should contain field {string}")
+	public void fieldPresence(String field) {
+		response.then().body("$", everyItem(hasKey("collectionName")));
+	}
+
+	
+	@When("user sends authenticated GET to {string} with no objects and key {string}")
+	public void getWithKey(String endpoint, String key) {
+		response = RestUtility.getWithKey(endpoint, key);
+	}
+
 
 	@Given("the API URL {string} is up and running")
 	public void setBaseUrl(String baseuri) {
 		
 		Assert.assertEquals(RestAssured.baseURI, baseuri,
 				"Base URI mismatch: expected " + baseuri + " but Hooks set " + RestAssured.baseURI);
+
+	@When("user sends GET to {string} with invalid key {string}")
+	public void getWithInvalidKey(String endpoint, String key) {
+		response = RestUtility.getWithKey(endpoint, key);
+
 	}
+
+
+
+	@When("user sends unauthenticated GET to {string}")
+	public void unauthenticatedGet(String endpoint) {
+		response = RestUtility.getNoAuth(endpoint);
+	}
+
 
 
 	// Author Barath
@@ -36,6 +73,12 @@ public class CollectionSteps {
 		response = RestUtility.delete(endpoint);
 	}
 
+	@When("user sends GET request to collections endpoint with invalid API key from test data")
+	public void userSendsGETWithInvalidAPIFromExcel() {
+		int rowCount = ExcelUtility.getRowCount("Sheet1", 22);
+
+
+
 	@When("user sends authenticated DELETE requests to {string} with invalid IDs")
 	public void deleteWithInvalidIds(String baseEndpoint, DataTable table) {
 		List<String> ids = table.asList();
@@ -43,6 +86,12 @@ public class CollectionSteps {
 			response = RestUtility.delete(baseEndpoint + id);
 		}
 	}
+
+		for (int i = 0; i < rowCount; i++) {
+			String invalidAPI = ExcelUtility.getCellData("Sheet1", i, 22);
+			response = RestAssured.given().header("x-api-key", invalidAPI).when().get("/collections");
+
+
 
 	@When("user sends authenticated DELETE to {string}")
 	public void deleteOtherUserCollection(String endpoint) {
@@ -70,6 +119,10 @@ public class CollectionSteps {
 		String endpointTemplate = FileUtility.get("endpoint.collection.object");
 		String actualPath = endpointTemplate.replace("{collectionName}", collectionName).replace("{id}", newObjectId);
 		response = RestUtility.delete(actualPath);
+	}
+
+
+		}
 	}
 
 }
