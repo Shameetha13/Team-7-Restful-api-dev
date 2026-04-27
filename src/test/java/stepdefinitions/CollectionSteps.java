@@ -1,138 +1,128 @@
 package stepdefinitions;
 
-import io.cucumber.java.en.*;
-import io.restassured.response.Response;
-import static io.restassured.RestAssured.*;
 
-import context.TestContext;
+import java.util.*;
+=======
+>>>>>>> refs/remotes/origin/TS-01/05/09
+import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.*;
+import io.restassured.RestAssured;
+import io.restassured.specification.RequestSpecification;
+import pojoclass.ObjectAndCollection;
 import io.restassured.response.Response;
-import org.testng.Assert;
+<<<<<<< HEAD
+import static org.testng.Assert.*;
+=======
+>>>>>>> refs/remotes/origin/TS-01/05/09
 import utils.ExcelUtility;
 import utils.FileUtility;
 import utils.RestUtility;
+import static org.hamcrest.Matchers.*;
+import java.util.List;
+import java.util.Map;
+import org.testng.Assert;
+
 
 public class CollectionSteps {
-
-    Response response;
-    private Map<String, String> testData;
-    private String baseUrl = FileUtility.getProperty("base.url");
-    private String token   = FileUtility.getProperty("auth.token");
-
-    @Given("the user is logged in")
-    public void login() {
-        // simple placeholder (no auth logic)
-        System.out.println("User logged in");
-    }
-@When("I add a collection item from Excel row {int} into collection {string}")
-    public void addCollectionItem(int rowIndex, String collectionName) {
-        // rowIndex from feature file is 0-based data row;
-        // row 0 in Excel = header, so actual row = rowIndex + 1
-        testData = ExcelUtility.getRowData(rowIndex + 1);
-
-        String url = baseUrl + "/collections/" + collectionName + "/items";
-        response  = RestUtility.post(url, token, testData);
-    }
+	
+// Author Kamala Kannan
+	private Response response;
+	
+	@When("user sends authenticated GET to {string}")
+	public void authenticatedGet(String endpoint) {
+		response = RestUtility.get(endpoint);
+	}
 
 
-    @Then("the response status should be {int}")
-    public void verifyStatusCode(int expectedStatus) {
-        Assert.assertEquals(
-            response.getStatusCode(),
-            expectedStatus,
-            "Status code mismatch"
-        );
-    }
+	@And("the response should contain field {string}")
+	public void fieldPresence(String field) {
+		response.then().body("$", everyItem(hasKey("collectionName")));
+	}
 
-    @Then("the response Content-Type should contain {string}")
-    public void verifyContentType(String expectedContentType) {
-        String actualContentType = response.getContentType();
-        Assert.assertTrue(
-            actualContentType.contains(expectedContentType),
-            "Expected Content-Type to contain '" + expectedContentType
-                + "' but got: " + actualContentType
-        );
-    }
+	
+	@When("user sends authenticated GET to {string} with no objects and key {string}")
+	public void getWithKey(String endpoint, String key) {
+		response = RestUtility.getWithKey(endpoint, key);
+	}
 
 
-    @Then("the response should contain created item with all fields")
-    public void verifyCreatedItemWithAllFields() {
-        Assert.assertNotNull(
-            response.jsonPath().getString("id"),
-            "Response should contain 'id'"
-        );
+	@Given("the API URL {string} is up and running")
+	public void setBaseUrl(String baseuri) {
+		
+		Assert.assertEquals(RestAssured.baseURI, baseuri,
+				"Base URI mismatch: expected " + baseuri + " but Hooks set " + RestAssured.baseURI);
+
+	@When("user sends GET to {string} with invalid key {string}")
+	public void getWithInvalidKey(String endpoint, String key) {
+		response = RestUtility.getWithKey(endpoint, key);
+
+	}
 
 
-        for (Map.Entry<String, String> entry : testData.entrySet()) {
-            String key      = entry.getKey();
-            String expected = entry.getValue();
-            String actual   = response.jsonPath().getString(key);
 
-            Assert.assertEquals(
-                actual,
-                expected,
-                "Field mismatch for key: " + key
-            );
-        }
-    }
+	@When("user sends unauthenticated GET to {string}")
+	public void unauthenticatedGet(String endpoint) {
+		response = RestUtility.getNoAuth(endpoint);
+	}
 
 
-    @Then("item should be created in current user's collection")
-    public void verifyItemCreatedInCurrentUserCollection() {
-        String currentUser = FileUtility.getProperty("current.user.id");
 
- 
-        String ownerInResponse = response.jsonPath().getString("ownerId");
-        Assert.assertEquals(
-            ownerInResponse,
-            currentUser,
-            "Item should be owned by current user, not another user"
-        );
+	// Author Barath
+	@When("user deletes the created collection item from {string}")
+	public void deleteCreatedItem(String endpoint) {
+		response = RestUtility.delete(endpoint);
+	}
 
-        Assert.assertNotNull(
-            response.jsonPath().getString("id"),
-            "Response should contain generated 'id'"
-        );
-    }
+	@When("user sends GET request to collections endpoint with invalid API key from test data")
+	public void userSendsGETWithInvalidAPIFromExcel() {
+		int rowCount = ExcelUtility.getRowCount("Sheet1", 22);
 
-    
 
-    @Then("the response should contain generated id")
-    public void verifyGeneratedId() {
-        String id = response.jsonPath().getString("id");
-        Assert.assertNotNull(id,  "Response should contain a generated 'id'");
-        Assert.assertFalse(id.isEmpty(), "'id' in response should not be empty");
-    }
 
-    @When("user deletes the collection item {string} from {string} using credentials {string} and {string}")
-    public void deleteCollection(String objectId, String collection, String email, String password) {
-        response = given()
-                .auth().preemptive().basic(email, password)
-                .when()
-                .delete("/collections/" + collection + "/objects/" + objectId);
-    }
+	@When("user sends authenticated DELETE requests to {string} with invalid IDs")
+	public void deleteWithInvalidIds(String baseEndpoint, DataTable table) {
+		List<String> ids = table.asList();
+		for (String id : ids) {
+			response = RestUtility.delete(baseEndpoint + id);
+		}
+	}
 
-    @When("user sends authenticated DELETE requests to {string} with invalid IDs")
-    public void deleteInvalidIds(String path, io.cucumber.datatable.DataTable table) {
-        for (String id : table.asList()) {
-            response = given()
-                    .auth().preemptive().basic("test@mail.com", "1234")
-                    .when()
-                    .delete(path + "/" + id);
+		for (int i = 0; i < rowCount; i++) {
+			String invalidAPI = ExcelUtility.getCellData("Sheet1", i, 22);
+			response = RestAssured.given().header("x-api-key", invalidAPI).when().get("/collections");
 
-            System.out.println(response.getStatusCode());
-        }
-    }
 
-    @Then("each response status code should be {int}")
-    public void verifyEachStatus(int code) {
-        System.out.println("Verified status: " + code);
-    }
 
-    @Then("each response body should have an error message")
-    public void verifyError() {
-        System.out.println("Error verified");
-    }
+	@When("user sends authenticated DELETE to {string}")
+	public void deleteOtherUserCollection(String endpoint) {
+		response = RestUtility.delete(endpoint);
+	}
 
-    
+	@When("user deletes the collection item for {string}")
+	public void deleteItem(String collectionName) {
+		String newObjectId = createTempObject(collectionName, "Temp Delete", 2023, 1000.0, "i5", "256GB");
+		String endpointTemplate = FileUtility.get("endpoint.collection.object");
+		String actualPath = endpointTemplate.replace("{collectionName}", collectionName).replace("{id}", newObjectId);
+		response = RestUtility.delete(actualPath);
+	}
+
+	@When("user deletes the collection item from Excel sheet {string} at row {int}")
+	public void deleteItemFromExcel(String sheetName, int rowNum) {
+		Map<String, String> data = ExcelUtility.getRowDataAsMap(sheetName, rowNum);
+		String collectionName = data.get("collectionNames");
+		String name = data.get("tempName");
+		int year = (int) Double.parseDouble(data.get("tempYear"));
+		double price = Double.parseDouble(data.get("tempPrice"));
+		String cpu = data.get("tempCPU");
+		String disk = data.get("tempDisk");
+		String newObjectId = createTempObject(collectionName, name, year, price, cpu, disk);
+		String endpointTemplate = FileUtility.get("endpoint.collection.object");
+		String actualPath = endpointTemplate.replace("{collectionName}", collectionName).replace("{id}", newObjectId);
+		response = RestUtility.delete(actualPath);
+	}
+
+
+		}
+	}
+
 }
