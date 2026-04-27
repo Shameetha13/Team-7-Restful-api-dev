@@ -10,14 +10,14 @@ import utils.ExcelUtility;
 import utils.FileUtility;
 import utils.RestUtility;
 import static org.hamcrest.Matchers.*;
-
 import java.util.List;
 import java.util.Map;
-
 import org.testng.Assert;
 
 public class CollectionSteps {
+	
 // Author Kamala Kannan
+	
 	@When("user sends authenticated GET to {string}")
 	public void authenticatedGet(String endpoint) {
 		response = RestUtility.get(endpoint);

@@ -1,3 +1,4 @@
+Feature:
 # Author Kamala Kannan
   Rule: TS-01 Verify that a guest user can successfully retrieve a full list of all available public objects.
 

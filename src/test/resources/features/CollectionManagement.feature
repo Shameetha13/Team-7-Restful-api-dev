@@ -1,3 +1,8 @@
+Feature: Fetch single object from a collection
+
+  Background:
+    Given the API URL "https://api.restful-api.dev" is up and running
+
 # Author: Kamala Kannan (TS-01/05/09)
   Rule: TS-09 Verify that an authenticated user can view a list of all their created private collections.
 

@@ -5,7 +5,6 @@ import io.restassured.response.Response;
 
 public class RestUtility {
 
-
     public static Response post(String endpoint, Object body) {
         return given()
                 .header("Content-Type", "application/json")
