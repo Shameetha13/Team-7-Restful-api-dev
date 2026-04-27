@@ -1,137 +1,113 @@
 package stepdefinitions;
 
-import io.cucumber.java.en.*;
-import io.cucumber.datatable.DataTable;
+import java.util.List;
+import java.util.Map;
+import org.testng.Assert;
+import io.cucumber.java.en.And;
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
 import io.restassured.response.Response;
+import pojoclass.AuthRequest;
 import utils.FileUtility;
 import utils.RestUtility;
 
-import java.util.List;
-import java.util.Map;
-
-import static org.testng.Assert.*;
-
+// Author Shameetha Ravikumar
 public class AuthSteps {
 
     private Response response;
-    private String baseUrl;
-    private String apiKey;
-    private long startTime;
 
-
-    @Given("the authentication API is accessible with a valid API key")
-    public void theAuthenticationAPIIsAccessibleWithAValidAPIKey() {
-        baseUrl = FileUtility.getProperty("base.url");
-        apiKey  = FileUtility.getProperty("api.key");
-        assertNotNull(baseUrl, "Base URL must not be null");
-        assertNotNull(apiKey,  "API Key must not be null");
+    @Given("the API URL is accessible with a valid API key")
+    public void setup() {
+       
+        String apiKey = FileUtility.get("api.key");
+        Assert.assertNotNull(apiKey, "API key must not be null in config.properties");
+        Assert.assertFalse(apiKey.isEmpty(), "API key must not be empty in config.properties");
     }
 
-    @When("I send a POST request to {string} with email {string}, password {string} and name {string}")
-    public void iSendAPostRequestToRegisterWithEmailPasswordAndName(
-            String endpoint, String email, String password, String name) {
-
-        String url = baseUrl + endpoint;
-
-        Map<String, String> payload = new java.util.HashMap<>();
-        payload.put("email",    email);
-        payload.put("password", password);
+    @When("I send a POST request with email {string}, password {string} and name {string}")
+    public void sendPostRequest(String email, String password, String name) {
+    	String registerEndpoint = FileUtility.get("endpoint.register");
+        AuthRequest request = new AuthRequest();
+        request.setEmail(email);
+        request.setPassword(password);
         if (name != null && !name.isEmpty()) {
-            payload.put("name", name);
+            request.setName(name);
         }
-
-        startTime = System.currentTimeMillis();
-        response  = RestUtility.post(url, apiKey, payload);
+        response = RestUtility.post(registerEndpoint, request);
     }
 
-    @Then("the register response status should be {int}")
-    public void theRegisterResponseStatusShouldBe(int expectedStatus) {
-        assertEquals(response.getStatusCode(), expectedStatus,
-                "Expected status " + expectedStatus + " but got " + response.getStatusCode());
+    @Then("validate the response status code {int}")
+    public void validateStatusCode(int statusCode) {
+        response.then().log().all().statusCode(statusCode);
     }
 
-
-    @Then("the response Content-Type should contain {string}")
-    public void theResponseContentTypeShouldContain(String expectedContentType) {
-        String actualContentType = response.getContentType();
-        assertTrue(actualContentType.contains(expectedContentType),
-                "Expected Content-Type to contain '" + expectedContentType
-                        + "' but got '" + actualContentType + "'");
+    @And("the status message should contain {string}")
+    public void validateStatusMessage(String expectedStatus) {
+        String statusLine = response.getStatusLine();
+        Assert.assertNotNull(statusLine, "Status line is null");
+        Assert.assertTrue(statusLine.contains(expectedStatus),
+                "Expected status message: " + expectedStatus + " but got: " + statusLine);
     }
 
-    @Then("the response time should be within {int} ms")
-    public void theResponseTimeShouldBeWithinMs(int maxMs) {
-        long elapsed = System.currentTimeMillis() - startTime;
-        assertTrue(elapsed <= maxMs,
-                "Response time " + elapsed + "ms exceeded limit of " + maxMs + "ms");
+    @And("the response should contain {string}")
+    public void validateEmail(String expectedEmail) {
+        String actualEmail = response.jsonPath().getString("user.email");
+        Assert.assertNotNull(actualEmail, "Email is null in response");
+        Assert.assertTrue(actualEmail.contains(expectedEmail),
+                "Expected email: " + expectedEmail + " but got: " + actualEmail);
     }
 
-
-    @Given("the test user is registered")
-    public void theTestUserIsRegistered() {
-        String url = baseUrl + "/register";
-
-        Map<String, String> payload = new java.util.HashMap<>();
-        payload.put("email",    FileUtility.getProperty("test.user.email"));
-        payload.put("password", FileUtility.getProperty("test.user.password"));
-        payload.put("name",     FileUtility.getProperty("test.user.name"));
-
-        Response reg = RestUtility.post(url, apiKey, payload);
-        // 200 = newly created, 409 = already exists — both are acceptable preconditions
-        assertTrue(reg.getStatusCode() == 200 || reg.getStatusCode() == 409,
-                "Pre-condition setup failed. Status: " + reg.getStatusCode());
+    @And("the response name should contain {string}")
+    public void validateName(String expectedName) {
+        String actualName = response.jsonPath().getString("user.name");
+        Assert.assertNotNull(actualName, "Name is null in response");
+        Assert.assertTrue(actualName.contains(expectedName),
+                "Expected name: " + expectedName + " but got: " + actualName);
     }
 
+    @And("the response time should be within {int} ms")
+    public void validateResponseTime(int maxTime) {
+        long time = response.getTime();
+        Assert.assertTrue(time <= maxTime, "Response time exceeded: " + time + " ms");
+    }
 
     @When("I login with following details")
-    public void iLoginWithFollowingDetails(DataTable dataTable) {
-        List<Map<String, String>> rows = dataTable.asMaps(String.class, String.class);
-        Map<String, String> credentials = rows.get(0);
-
-        Map<String, String> payload = new java.util.HashMap<>();
-
-        if (credentials.containsKey("email")) {
-            payload.put("email", credentials.get("email"));
-        }
-        if (credentials.containsKey("password")) {
-            payload.put("password", credentials.get("password"));
-        }
-
-        String url = baseUrl + "/login";
-        startTime  = System.currentTimeMillis();
-        response   = RestUtility.post(url, apiKey, payload);
+    public void loginWithDetails(io.cucumber.datatable.DataTable dataTable) {
+        AuthRequest request = new AuthRequest();
+        Map<String, String> data = dataTable.asMaps().get(0);
+        request.setEmail(data.getOrDefault("email", ""));
+        request.setPassword(data.getOrDefault("password", ""));
+        response = RestUtility.post(FileUtility.get("endpoint.login"), request);
     }
 
     @When("I login with following details without API key")
-    public void iLoginWithFollowingDetailsWithoutAPIKey(DataTable dataTable) {
-        List<Map<String, String>> rows = dataTable.asMaps(String.class, String.class);
-        Map<String, String> credentials = rows.get(0);
-
-        Map<String, String> payload = new java.util.HashMap<>();
-        payload.put("email",    credentials.get("email"));
-        payload.put("password", credentials.get("password"));
-
-        String url = baseUrl + "/login";
-        startTime  = System.currentTimeMillis();
-
-        response = RestUtility.post(url, "", payload);
+    public void loginWithoutApiKey(io.cucumber.datatable.DataTable dataTable) {
+        AuthRequest request = new AuthRequest();
+        request.setEmail(dataTable.asMaps().get(0).get("email"));
+        request.setPassword(dataTable.asMaps().get(0).get("password"));
+        response = RestUtility.postNoAuth(FileUtility.get("endpoint.login"), request);
     }
 
-
-
-    @Then("the login response status should be {int}")
-    public void theLoginResponseStatusShouldBe(int expectedStatus) {
-        assertEquals(response.getStatusCode(), expectedStatus,
-                "Expected status " + expectedStatus + " but got " + response.getStatusCode());
+    @And("the response should contain JWT token")
+    public void validateJwtToken() {
+        String token = response.jsonPath().getString("token");
+        Assert.assertNotNull(token, "Token is null");
+        Assert.assertFalse(token.trim().isEmpty(), "Token is empty");
     }
 
-    @Then("the response should contain JWT token")
-    public void theResponseShouldContainJWTToken() {
-    
-        String body = response.getBody().asString();
-        assertTrue(
-                body.contains("token") || body.contains("accessToken") || body.contains("jwt"),
-                "Response body does not contain a JWT token field. Body: " + body
-        );
+    @And("the response Content-Type should contain {string}")
+    public void validateContentType(String contentType) {
+        String actual = response.getContentType();
+        Assert.assertTrue(actual.contains(contentType),
+                "Expected Content-Type to contain: " + contentType + " but got: " + actual);
+    }
+
+    @And("the response should contain user email")
+    public void validateUserEmail(io.cucumber.datatable.DataTable dataTable) {
+        List<Map<String, String>> data = dataTable.asMaps(String.class, String.class);
+        String expectedEmail = data.get(0).get("email");
+        String actualEmail = response.jsonPath().getString("user.email");
+        Assert.assertEquals(actualEmail, expectedEmail);
     }
 }
