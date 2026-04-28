@@ -1,5 +1,5 @@
 # Author Shameetha Ravikumar
-Feature: User Authentication - Register
+Feature: User Authentication - Register & Login
 
   Background:
     Given the API URL is accessible with a valid API key

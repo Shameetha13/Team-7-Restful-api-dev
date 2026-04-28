@@ -1,6 +1,5 @@
 package stepdefinitions;
 
-import java.util.List;
 import java.util.Map;
 import org.testng.Assert;
 import io.cucumber.java.en.And;
@@ -107,7 +106,7 @@ public class AuthSteps {
         AuthRequest request = new AuthRequest();
         request.setEmail(dataTable.asMaps().get(0).get("email"));
         request.setPassword(dataTable.asMaps().get(0).get("password"));
-        response = RestUtility.postNoAuth(FileUtility.get("endpoint.login"), request);
+        response = RestUtility.postMissingAuth(FileUtility.get("endpoint.login"), request);
     }
 
     @And("the response should contain JWT token")
