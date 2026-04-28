@@ -16,8 +16,8 @@ Feature: User Authentication - Register
       And the response time should be within 5000 ms
 
       Examples:
-        | email             | password  | name     | statusCode | statusMsg |
-        | branew12@test.com | Test@1234 | testuser | 200        | OK        |
+        | email    | password  | name     | statusCode | statusMsg |
+        | <random> | Test@1234 | testuser | 200        | OK        |
 
     Scenario Outline: TC-27 Register API validation (Duplicate)
       When I send a POST request with email "<email>", password "<password>" and name "<name>"
@@ -26,8 +26,8 @@ Feature: User Authentication - Register
       And the response time should be within 5000 ms
 
       Examples:
-        | email             | password  | name     | statusCode | statusMsg |
-        | branew12@test.com | Test@1234 | testuser | 409        | Conflict  |
+        | email       | password  | name     | statusCode | statusMsg |
+        | <duplicate> | Test@1234 | testuser | 409        | Conflict  |
 
     Scenario Outline: TC-28 Register API validation (Simple Password- DEFECT)
       When I send a POST request with email "<email>", password "<password>" and name "<name>"
@@ -36,8 +36,8 @@ Feature: User Authentication - Register
       And the response time should be within 5000 ms
 
       Examples:
-        | email                     | password | name     | statusCode | statusMsg   |
-        | weakuserNew01234@test.com | 1        | testuser | 400        | Bad Request |
+        | email    | password | name     | statusCode | statusMsg   |
+        | <random> | 1        | testuser | 400        | Bad Request |
 
     Scenario Outline: TC-29 Register API validation (Missing Field)
       When I send a POST request with email "<email>", password "<password>" and name "<name>"
@@ -46,20 +46,20 @@ Feature: User Authentication - Register
       And the response time should be within 5000 ms
 
       Examples:
-        | email               | password  | name | statusCode | statusMsg   |
-        | noname5434@test.com | Test@1234 |      | 400        | Bad Request |
+        | email    | password  | name | statusCode | statusMsg   |
+        | <random> | Test@1234 |      | 400        | Bad Request |
 
   Rule: TS-08 Verify that a user can successfully login to their account
 
     Scenario: TC31 & TC35 - Login with valid credentials and Response time validation
       When I login with following details
-        | email             | password  |
-        | branew12@test.com | Test@1234 |
+        | email    | password  |
+        | <random> | Test@1234 |
       Then validate the response status code 200
       And the response should contain JWT token
       And the response should contain user email
-        | email             |
-        | branew12@test.com |
+        | email         |
+        | <verifyEmail> |
       And the response Content-Type should contain "application/json"
       And the response time should be within 5000 ms
 
