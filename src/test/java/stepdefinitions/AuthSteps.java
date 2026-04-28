@@ -14,7 +14,6 @@ import utils.JavaUtility;
 import utils.RestUtility;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.lessThan;
-import static org.hamcrest.Matchers.lessThanOrEqualTo;
 
 // Author Shameetha Ravikumar
 public class AuthSteps {
