@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extentreports>
+    <configuration>
+        <theme>DARK</theme>
+        <documentTitle>Automation Report</documentTitle>
+        <reportName>BDD Test Execution Report</reportName>
+    </configuration>
+</extentreports>

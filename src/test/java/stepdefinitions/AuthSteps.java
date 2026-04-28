@@ -1,6 +1,5 @@
 package stepdefinitions;
 
-import java.util.List;
 import java.util.Map;
 import org.testng.Assert;
 import io.cucumber.java.en.And;
@@ -10,11 +9,15 @@ import io.cucumber.java.en.When;
 import io.restassured.response.Response;
 import pojoclass.AuthRequest;
 import utils.FileUtility;
+import utils.JavaUtility;
 import utils.RestUtility;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.lessThan;
 
 // Author Shameetha Ravikumar
 public class AuthSteps {
-
+    private static String lastRegisteredEmail;
+    private static String loginEmail;
     private Response response;
 
     @Given("the API URL is accessible with a valid API key")
@@ -27,14 +30,18 @@ public class AuthSteps {
 
     @When("I send a POST request with email {string}, password {string} and name {string}")
     public void sendPostRequest(String email, String password, String name) {
-    	String registerEndpoint = FileUtility.get("endpoint.register");
-        AuthRequest request = new AuthRequest();
-        request.setEmail(email);
-        request.setPassword(password);
-        if (name != null && !name.isEmpty()) {
-            request.setName(name);
-        }
-        response = RestUtility.post(registerEndpoint, request);
+
+    if (email.equals("<random>")) {
+        email = JavaUtility.getRandomEmail();
+        lastRegisteredEmail = email; 
+    } 
+    
+    else if (email.equals("<duplicate>")) {
+        email = lastRegisteredEmail;
+    }
+
+    AuthRequest requestBody = new AuthRequest(email, password, name);
+    response = RestUtility.post(FileUtility.get("endpoint.register"), requestBody);
     }
 
     @Then("validate the response status code {int}")
@@ -45,69 +52,88 @@ public class AuthSteps {
     @And("the status message should contain {string}")
     public void validateStatusMessage(String expectedStatus) {
         String statusLine = response.getStatusLine();
-        Assert.assertNotNull(statusLine, "Status line is null");
-        Assert.assertTrue(statusLine.contains(expectedStatus),
-                "Expected status message: " + expectedStatus + " but got: " + statusLine);
+        Assert.assertNotNull(statusLine);
+        Assert.assertTrue(statusLine.contains(expectedStatus));
     }
 
-    @And("the response should contain {string}")
+   @And("the response should contain {string}")
     public void validateEmail(String expectedEmail) {
-        String actualEmail = response.jsonPath().getString("user.email");
-        Assert.assertNotNull(actualEmail, "Email is null in response");
-        Assert.assertTrue(actualEmail.contains(expectedEmail),
-                "Expected email: " + expectedEmail + " but got: " + actualEmail);
+    String actualEmail = response.jsonPath().getString("user.email");
+    Assert.assertNotNull(actualEmail);
+    String emailToVerify = expectedEmail.equals("<random>") ? lastRegisteredEmail : expectedEmail;
+    Assert.assertEquals(actualEmail,emailToVerify);
     }
 
     @And("the response name should contain {string}")
     public void validateName(String expectedName) {
         String actualName = response.jsonPath().getString("user.name");
-        Assert.assertNotNull(actualName, "Name is null in response");
-        Assert.assertTrue(actualName.contains(expectedName),
-                "Expected name: " + expectedName + " but got: " + actualName);
+        Assert.assertNotNull(actualName);
+        Assert.assertEquals(actualName,expectedName);
     }
 
     @And("the response time should be within {int} ms")
     public void validateResponseTime(int maxTime) {
-        long time = response.getTime();
-        Assert.assertTrue(time <= maxTime, "Response time exceeded: " + time + " ms");
+    assertThat(response.getTime(), lessThan((long) maxTime));
     }
 
     @When("I login with following details")
     public void loginWithDetails(io.cucumber.datatable.DataTable dataTable) {
-        AuthRequest request = new AuthRequest();
-        Map<String, String> data = dataTable.asMaps().get(0);
-        request.setEmail(data.getOrDefault("email", ""));
-        request.setPassword(data.getOrDefault("password", ""));
-        response = RestUtility.post(FileUtility.get("endpoint.login"), request);
+    Map<String, String> data = dataTable.asMaps().get(0);
+    
+   
+    String email = data.get("email"); 
+    String password = data.getOrDefault("password", "");
+    
+    if (email != null && email.equals("<random>")) {
+        loginEmail = JavaUtility.getRandomEmail();
+        String name = data.getOrDefault("name", JavaUtility.getRandomName());
+        
+        AuthRequest registerRequest = new AuthRequest(loginEmail, password, name);
+        RestUtility.post(FileUtility.get("endpoint.register"), registerRequest);
+        email = loginEmail; 
+    } else {
+        loginEmail = email; 
     }
-
+    
+    AuthRequest loginRequest = new AuthRequest();
+    loginRequest.setEmail(loginEmail);
+    loginRequest.setPassword(password);
+    
+    response = RestUtility.post(FileUtility.get("endpoint.login"), loginRequest);
+    }
     @When("I login with following details without API key")
     public void loginWithoutApiKey(io.cucumber.datatable.DataTable dataTable) {
         AuthRequest request = new AuthRequest();
         request.setEmail(dataTable.asMaps().get(0).get("email"));
         request.setPassword(dataTable.asMaps().get(0).get("password"));
-        response = RestUtility.postNoAuth(FileUtility.get("endpoint.login"), request);
+        response = RestUtility.postMissingAuth(FileUtility.get("endpoint.login"), request);
     }
 
     @And("the response should contain JWT token")
     public void validateJwtToken() {
         String token = response.jsonPath().getString("token");
-        Assert.assertNotNull(token, "Token is null");
+        Assert.assertNotNull(token);
         Assert.assertFalse(token.trim().isEmpty(), "Token is empty");
     }
 
     @And("the response Content-Type should contain {string}")
     public void validateContentType(String contentType) {
         String actual = response.getContentType();
-        Assert.assertTrue(actual.contains(contentType),
-                "Expected Content-Type to contain: " + contentType + " but got: " + actual);
+        Assert.assertTrue(actual.contains(contentType));
     }
 
     @And("the response should contain user email")
     public void validateUserEmail(io.cucumber.datatable.DataTable dataTable) {
-        List<Map<String, String>> data = dataTable.asMaps(String.class, String.class);
-        String expectedEmail = data.get(0).get("email");
-        String actualEmail = response.jsonPath().getString("user.email");
-        Assert.assertEquals(actualEmail, expectedEmail);
+    Map<String, String> data = dataTable.asMaps().get(0);
+    String emailFromTable = data.get("email");
+    String actualEmail = response.jsonPath().getString("user.email");
+    String emailToVerify;
+        if (emailFromTable.equals("<verifyEmail>")) {
+            emailToVerify = loginEmail; 
+        } else {
+            emailToVerify = emailFromTable;
+        }
+    Assert.assertNotNull(actualEmail);
+    Assert.assertEquals(actualEmail, emailToVerify);
     }
 }
