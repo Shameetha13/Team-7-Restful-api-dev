@@ -88,6 +88,8 @@ public class CollectionSteps {
 			return "'Hard disk size'";
 		return field;
 	}
+	
+	
     // Author Kamala Kannan
 	
 	@When("user sends authenticated GET to {string}")
@@ -106,13 +108,12 @@ public class CollectionSteps {
 	public void getWithKey(String endpoint, String key) {
 		response = RestUtility.getWithKey(endpoint, key);
 	}
-
-
+	
 	@Given("the API URL {string} is up and running")
 	public void setBaseUrl(String baseuri) {
-		
 		Assert.assertEquals(RestAssured.baseURI, baseuri,
-				"Base URI mismatch: expected " + baseuri + " but Hooks set " + RestAssured.baseURI);
+				"Base URI mismatch: expected " + baseuri + " but Hooks set " + RestAssured.baseURI); 
+	}
 
 	@When("user sends GET to {string} with invalid key {string}")
 	public void getWithInvalidKey(String endpoint, String key) {
@@ -125,6 +126,7 @@ public class CollectionSteps {
 		response = RestUtility.getNoAuth(endpoint);
 	}
 
+	
 	// Author Barath
 	@When("user deletes the created collection item from {string}")
 	public void deleteCreatedItem(String endpoint) {
@@ -134,8 +136,7 @@ public class CollectionSteps {
 	@When("user sends GET request to collections endpoint with invalid API key from test data")
 	public void userSendsGETWithInvalidAPIFromExcel() {
 		int rowCount = ExcelUtility.getRowCount("Sheet1", 22);
-
-
+	}
 
 	@When("user sends authenticated DELETE requests to {string} with invalid IDs")
 	public void deleteWithInvalidIds(String baseEndpoint, DataTable table) {
@@ -143,13 +144,12 @@ public class CollectionSteps {
 		for (String id : ids) {
 			response = RestUtility.delete(baseEndpoint + id);
 		}
-	}
 
 		for (int i = 0; i < rowCount; i++) {
 			String invalidAPI = ExcelUtility.getCellData("Sheet1", i, 22);
 			response = RestAssured.given().header("x-api-key", invalidAPI).when().get("/collections");
-
-
+		}
+	}
 
 	@When("user sends authenticated DELETE to {string}")
 	public void deleteOtherUserCollection(String endpoint) {
@@ -179,110 +179,136 @@ public class CollectionSteps {
 		response = RestUtility.delete(actualPath);
 	}
 	
-	    // Author Manish
-		@When("I send a GET request to {string}")
-		public void sendGetRequestToEndpoint(String endpoint) {
-			response = RestUtility.get(endpoint);
-		}
+	
+    // Author Manish
+	@When("I send a GET request to {string}")
+	public void sendGetRequestToEndpoint(String endpoint) {
+		response = RestUtility.get(endpoint);
+	}
+	
+	public void createCollectionIfNotExists(String collectionName) {
+	    String endpoint = "/collections";
 
-		@When("I send a GET request to collection objects using row {int}")
-		public void sendGetRequestToEndpoint(int rowNum) {
-			String collectionName = ExcelUtility.getCellData("Sheet1", rowNum, 23); // col 23 = collectionName
-			String endpoint = "/collections/" + collectionName + "/objects";
-			System.out.println("Collection Name: " + collectionName);
-			System.out.println("Endpoint: " + endpoint);
-			response = RestUtility.get(endpoint);
-		}
+	    // Create request body
+	    Map<String, String> body = new HashMap<>();
+	    body.put("name", collectionName);
 
-		@And("the response body should contain a list of all objects in the collection")
-		public void validateList() {
-			response.then().body("$", not(empty()));
-		}
+	    try {
+	        Response res = RestUtility.post(endpoint, body);
 
-		@And("the response body should contain an empty list")
-		public void validateEmptyList() {
-			response.then().body("$", empty());
-		}
+	        if (res.getStatusCode() == 200) {
+	            System.out.println("Collection created: " + collectionName);
+	        } else {
+	            System.out.println("Collection may already exist: " + collectionName);
+	        }
 
-		@When("I send a GET request to {string} and measure response time")
-		public void sendGetRequestWithTime(String endpoint) {
-			sendGetRequestToEndpoint(endpoint);
-		}
+	    } catch (Exception e) {
+	        System.out.println("Skipping creation (possibly exists): " + collectionName);
+	    }
+	}
 
-		@When("I send a PUT request to {string} with a valid full payload")
-		public void sendPutRequestValid(String endpoint) {
-			String body = "{ \"name\": \"Updated Product\", \"data\": { \"price\": 1000, \"year\": 2025 } }";
-			response = RestUtility.put(endpoint, body);
-		}
+	@When("I send a GET request to collection objects using row {int}")
+	public void sendGetRequestToEndpoint(int rowNum) {
+	    createCollectionIfNotExists("product");
+	    createCollectionIfNotExists("test");
 
-		@And("the response body should contain the fully updated object")
-		public void validateUpdatedObject() {
-			response.then().body("name", notNullValue());
-		}
+	    String collectionName = ExcelUtility.getCellData("Sheet1", rowNum, 23);
+	    String endpoint = "/collections/" + collectionName + "/objects";
 
-		@And("the response body should reflect all updated values from the request")
-		public void validateUpdatedValues() {
-			response.then().body("name", equalTo("Updated Product"));
-		}
+	    System.out.println("Collection Name: " + collectionName);
+	    System.out.println("Endpoint: " + endpoint);
 
-		@When("I send a PUT request to {string} with missing required fields")
-		public void sendPutMissingFields(String endpoint) {
-			String body = "{ \"name\": \"\" }";
-			response = RestUtility.put(endpoint, body);
-		}
+	    response = RestUtility.get(endpoint);
+	}
 
-		@When("I send a PUT request to collection {string} with name {string}, year {int}, price {double}, cpu {string}, and disk {string}")
-		public void sendPutRequest(String collection, String name, int year, double price, String cpu, String disk) {
-			String endpoint = "/collections/" + collection + "/objects/" + objectId;
+	@And("the response body should contain a list of all objects in the collection")
+	public void validateList() {
+		response.then().body("$", not(empty()));
+	}
 
-			ObjectAndCollection obj = new ObjectAndCollection();
-			obj.setName(name);
+	@And("the response body should contain an empty list")
+	public void validateEmptyList() {
+		response.then().body("$", empty());
+	}
 
-			ObjectAndCollection.Data data = new ObjectAndCollection.Data();
-			data.setYear(year);
-			data.setPrice(price);
-			data.setCpuModel(cpu);
-			data.setHardDisk(disk);
-			obj.setData(data);
+	@When("I send a GET request to {string} and measure response time")
+	public void sendGetRequestWithTime(String endpoint) {
+		sendGetRequestToEndpoint(endpoint);
+	}
 
-			response = RestUtility.put(endpoint, obj);
-		}
+	@When("I send a PUT request to {string} with a valid full payload")
+	public void sendPutRequestValid(String endpoint) {
+		String body = "{ \"name\": \"Updated Product\", \"data\": { \"price\": 1000, \"year\": 2025 } }";
+		response = RestUtility.put(endpoint, body);
+	}
 
-		@When("I send a PATCH request to collection {string} with payload")
-		public void sendPatchWithConfig(String collection, DataTable dataTable) {
-			String newObjectId = createTempObject(collection, "Temp Product", 2023, 1000.0, "i5", "256GB");
-			System.out.println(newObjectId);
-			List<List<String>> data = dataTable.asLists();
-			String field = data.get(0).get(0);
-			String value = data.get(1).get(0);
+	@And("the response body should contain the fully updated object")
+	public void validateUpdatedObject() {
+		response.then().body("name", notNullValue());
+	}
 
-			String endpointTemplate = FileUtility.get("endpoint.collection.object");
-			String body = "{ \"" + field + "\": \"" + value + "\" }";
-			String actualPath = endpointTemplate.replace("{collectionName}", collection).replace("{id}", newObjectId);
-			System.out.println(actualPath);
-			response = RestUtility.patch(actualPath, body);
+	@And("the response body should reflect all updated values from the request")
+	public void validateUpdatedValues() {
+		response.then().body("name", equalTo("Updated Product"));
+	}
 
-		}
+	@When("I send a PUT request to {string} with missing required fields")
+	public void sendPutMissingFields(String endpoint) {
+		String body = "{ \"name\": \"\" }";
+		response = RestUtility.put(endpoint, body);
+	}
 
-		@And("the response body should show updated {string} as {string}")
-		public void validatePatchedField(String field, String expectedValue) {
-			String actual = response.jsonPath().getString(field);
-			Assert.assertEquals(actual, expectedValue, "Field '" + field + "' mismatch");
-		}
+	@When("I send a PUT request to collection {string} with name {string}, year {int}, price {double}, cpu {string}, and disk {string}")
+	public void sendPutRequest(String collection, String name, int year, double price, String cpu, String disk) {
+		String endpoint = "/collections/" + collection + "/objects/" + objectId;
 
-		@And("other attributes should remain unchanged")
-		public void validateOtherFields() {
-			response.then().body("id", notNullValue());
-		}
+		ObjectAndCollection obj = new ObjectAndCollection();
+		obj.setName(name);
 
-		@When("I send a PATCH request to {string} with partial data and measure response time")
-		public void sendPatchSingle(String endpoint, DataTable dataTable) {
-			Map<String, String> data = dataTable.asMaps().get(0);
-			String cName = data.get("collectionName");
-			String oId = data.get("objectId");
-			String body = "{ \"name\": \"Patched Name\" }";
-			String patchEndpoint = "/collections/" + cName + "/objects/" + oId;
+		ObjectAndCollection.Data data = new ObjectAndCollection.Data();
+		data.setYear(year);
+		data.setPrice(price);
+		data.setCpuModel(cpu);
+		data.setHardDisk(disk);
+		obj.setData(data);
+
+		response = RestUtility.put(endpoint, obj);
+	}
+
+	@When("I send a PATCH request to collection {string} with payload")
+	public void sendPatchWithConfig(String collection, DataTable dataTable) {
+		String newObjectId = createTempObject(collection, "Temp Product", 2023, 1000.0, "i5", "256GB");
+		System.out.println(newObjectId);
+		List<List<String>> data = dataTable.asLists();
+		String field = data.get(0).get(0);
+		String value = data.get(1).get(0);
+
+		String endpointTemplate = FileUtility.get("endpoint.collection.object");
+		String body = "{ \"" + field + "\": \"" + value + "\" }";
+		String actualPath = endpointTemplate.replace("{collectionName}", collection).replace("{id}", newObjectId);
+		System.out.println(actualPath);
+		response = RestUtility.patch(actualPath, body);
+
+	}
+
+	@And("the response body should show updated {string} as {string}")
+	public void validatePatchedField(String field, String expectedValue) {
+		String actual = response.jsonPath().getString(field);
+		Assert.assertEquals(actual, expectedValue, "Field '" + field + "' mismatch");
+	}
+
+	@And("other attributes should remain unchanged")
+	public void validateOtherFields() {
+		response.then().body("id", notNullValue());
+	}
+
+	@When("I send a PATCH request to {string} with partial data and measure response time")
+	public void sendPatchSingle(String endpoint, DataTable dataTable) {
+		Map<String, String> data = dataTable.asMaps().get(0);
+		String cName = data.get("collectionName");
+		String oId = data.get("objectId");
+		String body = "{ \"name\": \"Patched Name\" }";
+		String patchEndpoint = "/collections/" + cName + "/objects/" + oId;
 			response = RestUtility.patch(patchEndpoint, body);
-		}
 	}
 }
