@@ -82,6 +82,7 @@ public class AuthSteps {
 
     @When("I login with following details")
     public void loginWithDetails(io.cucumber.datatable.DataTable dataTable) {
+        
     Map<String, String> data = dataTable.asMaps().get(0);
     String email = data.get("email"); // Returns null if the column is missing (for TC-34)
     String password = data.getOrDefault("password", "");
