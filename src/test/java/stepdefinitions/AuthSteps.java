@@ -80,6 +80,18 @@ public class AuthSteps {
     assertThat(response.getTime(), lessThan((long) maxTime));
     }
 
+    @When("I login with following details")
+    public void loginWithDetails(io.cucumber.datatable.DataTable dataTable) {
+    Map<String, String> data = dataTable.asMaps().get(0);
+    String email = data.get("email"); // Returns null if the column is missing (for TC-34)
+    String password = data.getOrDefault("password", "");
+
+    AuthRequest loginRequest = new AuthRequest();
+    loginRequest.setEmail(email);
+    loginRequest.setPassword(password);
+    response = RestUtility.post(FileUtility.get("endpoint.login"), loginRequest);
+    }
+
     @When("I login with the registered credentials")
     public void loginWithRegisteredCredentials(io.cucumber.datatable.DataTable dataTable) {
         Map<String, String> data = dataTable.asMaps().get(0);
