@@ -20,6 +20,10 @@ public class AuthSteps {
     private static String loginEmail;
     private Response response;
 
+    public static void setLoginEmail(String email) {
+        loginEmail = email;
+    }
+    
     @Given("the API URL is accessible with a valid API key")
     public void setup() {
        
@@ -76,31 +80,18 @@ public class AuthSteps {
     assertThat(response.getTime(), lessThan((long) maxTime));
     }
 
-    @When("I login with following details")
-    public void loginWithDetails(io.cucumber.datatable.DataTable dataTable) {
-    Map<String, String> data = dataTable.asMaps().get(0);
-    
-   
-    String email = data.get("email"); 
-    String password = data.getOrDefault("password", "");
-    
-    if (email != null && email.equals("<random>")) {
-        loginEmail = JavaUtility.getRandomEmail();
-        String name = data.getOrDefault("name", JavaUtility.getRandomName());
+    @When("I login with the registered credentials")
+    public void loginWithRegisteredCredentials(io.cucumber.datatable.DataTable dataTable) {
+        Map<String, String> data = dataTable.asMaps().get(0);
+        String password = data.getOrDefault("password", "Test@1234");
         
-        AuthRequest registerRequest = new AuthRequest(loginEmail, password, name);
-        RestUtility.post(FileUtility.get("endpoint.register"), registerRequest);
-        email = loginEmail; 
-    } else {
-        loginEmail = email; 
+        AuthRequest loginRequest = new AuthRequest();
+        loginRequest.setEmail(loginEmail);
+        loginRequest.setPassword(password);
+        
+        response = RestUtility.post(FileUtility.get("endpoint.login"), loginRequest);
     }
-    
-    AuthRequest loginRequest = new AuthRequest();
-    loginRequest.setEmail(loginEmail);
-    loginRequest.setPassword(password);
-    
-    response = RestUtility.post(FileUtility.get("endpoint.login"), loginRequest);
-    }
+
     @When("I login with following details without API key")
     public void loginWithoutApiKey(io.cucumber.datatable.DataTable dataTable) {
         AuthRequest request = new AuthRequest();
@@ -123,17 +114,9 @@ public class AuthSteps {
     }
 
     @And("the response should contain user email")
-    public void validateUserEmail(io.cucumber.datatable.DataTable dataTable) {
-    Map<String, String> data = dataTable.asMaps().get(0);
-    String emailFromTable = data.get("email");
-    String actualEmail = response.jsonPath().getString("user.email");
-    String emailToVerify;
-        if (emailFromTable.equals("<verifyEmail>")) {
-            emailToVerify = loginEmail; 
-        } else {
-            emailToVerify = emailFromTable;
-        }
-    Assert.assertNotNull(actualEmail);
-    Assert.assertEquals(actualEmail, emailToVerify);
+    public void validateUserEmail() {
+        String actualEmail = response.jsonPath().getString("user.email");
+        Assert.assertNotNull(actualEmail);
+        Assert.assertEquals(actualEmail, loginEmail);
     }
 }

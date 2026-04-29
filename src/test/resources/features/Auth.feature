@@ -51,15 +51,14 @@ Feature: User Authentication - Register & Login
 
   Rule: TS-08 Verify that a user can successfully login to their account
 
-    Scenario: TC31 & TC35 - Login with valid credentials and Response time validation
-      When I login with following details
-        | email    | password  |
-        | <random> | Test@1234 |
+    @RegisterUser
+    Scenario: TC31 & TC35 - Login with valid credentials
+      When I login with the registered credentials
+        | password  |
+        | Test@1234 |
       Then validate the response status code 200
       And the response should contain JWT token
       And the response should contain user email
-        | email         |
-        | <verifyEmail> |
       And the response Content-Type should contain "application/json"
       And the response time should be within 5000 ms
 
